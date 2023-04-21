@@ -1,4 +1,6 @@
 import re, json, uuid, asyncio,string,random
+from nonebot import require
+require("nonebot_plugin_guild_patch")
 from nonebot_plugin_guild_patch import GuildMessageEvent
 from nonebot.plugin import on_command, on
 from nonebot.params import ArgStr, CommandArg
@@ -12,6 +14,7 @@ from .poe_create import poe_create
 from .poe_clear import poe_clear
 from .poe_login import submit_email, submit_code
 from .config import Config
+name = "nonebot_poe_chat"
 #一些配置
 config = Config()
 user_dict = config.user_dict
