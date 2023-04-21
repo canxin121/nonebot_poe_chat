@@ -18,8 +18,10 @@
 --可以直接回复机器人给你的回答来继续对话，无需命令  
 --可以使用数字索引来使用建议回复  
 --机器人的回答会以回复形式发送  
+--插件储存数据放置在./data/poe_chat中
 ## 功能使用
 --以下命令前面全部要加 /   
+~帮助:poehelp / poe帮助
 ~对话:poetalk / ptalk / pt  
 ~清空历史对话:poedump / pdump / pd  
 ~创建机器人:poecreate / 创建bot / pc  
@@ -27,7 +29,7 @@
 ~切换机器人:poeswitch / 切换bot / ps  
   
 ************************  
---以下功能仅限poe管理员使用  
+--以下功能仅限poe管理员可以使用  
 ~登录:poelogin / plogin / pl  
 ~添加预设:poeaddprompt / 添加预设 / pap  
 ~删除预设:poeremoveprompt / 删除预设 / prp  
@@ -43,7 +45,7 @@ playwright install chromuim
 ## 配置（在.env中修改）  
 
 ```
-#poe_cookie,poe网站的ck，见后文截图，也可以不填，而是用/pl命令登陆
+#poe_cookie,poe网站的ck，见后文截图，也可以不填，而使用/pl命令登陆
 poe_cookie = "f87HlVW~~%3D%3D"
 #poe_superusers，poe插件管理员qq号
 poe_superusers = ["123456","132145"]
