@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: nonebot-poe-chat
+Version: 0.0.2
+Summary: nonebot_poe_chat
+Home-page: https://github.com/canxin121/nonebot_poe_chat
+Author: canxin
+Author-email: 1969730106@qq.com
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.8
+Classifier: License :: OSI Approved :: GNU Affero General Public License v3
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+
+# nonebot_poe_chat
+ nonebot_poe_chat
