@@ -1,4 +1,4 @@
-import re, json, uuid, asyncio
+import re, json, uuid, asyncio,string,random
 from nonebot_plugin_guild_patch import GuildMessageEvent
 from nonebot.plugin import on_command, on
 from nonebot.params import ArgStr, CommandArg
@@ -107,6 +107,11 @@ async def __poe_create___(matcher:Matcher,event:Event,state: T_State, infos: str
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
 
 ######################################################    
+def generate_random_string(length=8):
+    """生成指定长度的随机字符串"""
+    letters = string.ascii_letters + string.digits
+    return ''.join(random.choice(letters) for _ in range(length))
+
 #保留上一个回答的chatsuggest
 chat_lock = asyncio.Semaphore(3)
 chat_suggest = {}
@@ -126,7 +131,8 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
     if userid not in user_dict:
-        truename = str(generate_uuid(str(userid + "default")))
+        random = generate_random_string()
+        truename = str(generate_uuid(str(userid + random)))
         is_created = await poe_create(cookie_path,truename,1,"一个智能助理")
         if is_created:
             user_dict[userid] = {}        
@@ -136,9 +142,9 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
             user_dict[userid]['now']["default"] = truename
             with open(user_path, 'w') as f:
                 json.dump(user_dict, f)
-            await matcher.send(reply_out(event, "自动创建default gpt3.5成功"))
+            await matcher.send(reply_out(event, "自动创建gpt3.5成功"))
         else:
-            await matcher.send(reply_out(event, "自动创建default gpt3.5失败，多次失败请联系机器人管理员"))
+            await matcher.send(reply_out(event, "自动创建gpt3.5失败，多次失败请联系机器人管理员"))
     if userid in chat_suggest and len(str(args[0])) == 1 and str(args[0]) in ['1','2','3','4']:
         text = chat_suggest[userid][int(str(args[0]))-1]
     else:
@@ -278,14 +284,14 @@ async def __poe_switch__(matcher:Matcher,event: Event):
     if len(bots)==1:
         await matcher.finish(reply_out(event, f"当前只有一个bot:{nickname}"))
     msg = "你已经创建的的bot有：\n" + bot_str +f"\n当前使用的bot是{nickname}"
-    await matcher.finish(reply_out(event, msg))
+    await matcher.send(reply_out(event, msg))
 
 @poe_switch.got('nickname',prompt='请输入要切换的机器人名称')
 async def __poe_switch____(matcher:Matcher,event: Event, infos: str = ArgStr("nickname")):
     userid = str(event.user_id)
     bots = list(user_dict[userid]["all"].keys())
     if infos in ["取消", "算了"]:
-        await matcher.finish(reply_out(event, "终止切换"))
+        await matcher.finish(reply_out(event, "中断切换"))
     infos = infos.split(" ")
     nickname = infos[0]
     if not (nickname in bots):
