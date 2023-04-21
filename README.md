@@ -55,6 +55,6 @@ poe_superusers = ["123456","132145"]
 
 | Image 1 | Image 2 |
 |:-------:|:-------:|
-| ![](https://github.com/canxin121/nonebot_api_paddle/blob/main/demo/demo%20(1).png) | ![](https://github.com/canxin121/nonebot_api_paddle/blob/main/demo/demo%20(1).jpg) |
+| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(1).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(2).PNG) |
 | Image 3 | Image 4 |
-| ![](https://github.com/canxin121/nonebot_api_paddle/blob/main/demo/demo%20(2).png) | ![](https://github.com/canxin121/nonebot_api_paddle/blob/main/demo/demo%20(3).png) |
+| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(3).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(4).PNG) |
