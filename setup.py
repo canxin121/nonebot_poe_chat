@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setuptools.setup(
     name="nonebot_poe_chat",  # 项目名称，保证它的唯一性，不要跟已存在的包名冲突即可
-    version="0.0.2",  # 程序版本
+    version="0.0.3",  # 程序版本
     author="canxin",  # 项目作者
     author_email="1969730106@qq.com",  # 作者邮件
     description="nonebot_poe_chat",  # 项目的一句话描述

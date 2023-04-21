@@ -38,19 +38,13 @@ async def send_message_async(page: Page, botname: str, input_str: str):
             await send_button.click()
             # 发送成功后退出循环
             break
-        except (TimeoutError, SyncTimeoutError) as ex:
+        except:
             # 如果出现超时异常，打印错误信息并稍等一段时间后重试
-            print(f"发送失败，错误信息：{ex}")
             error_count += 1
             if error_count >= 1:
                 await asyncio.sleep(retry_interval)
             current_retry += 1
             continue
-        except Exception as ex:
-            # 如果出现其他异常，打印错误信息并抛出异常
-            print(f"发送失败，错误信息：{ex}")
-            raise ex
-
     if current_retry == retry_count:
         return False
 
