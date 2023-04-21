@@ -50,6 +50,7 @@ poe_cookie = "f87HlVW~~%3D%3D"
 #poe_superusers，poe插件管理员qq号
 poe_superusers = ["123456","132145"]
 ```
+(https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/ck.png)
 ## 示例
 
 | Image 1 | Image 2 |
