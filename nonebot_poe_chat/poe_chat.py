@@ -1,10 +1,7 @@
 import asyncio
 import json
 import re
-from playwright.async_api import Playwright as AsyncPlaywright
 from playwright.async_api import async_playwright
-from playwright._impl._api_types import Error as PlaywrightError
-from playwright.sync_api import TimeoutError as SyncTimeoutError
 from playwright.sync_api import Page
 
 async def send_message_async(page: Page, botname: str, input_str: str):

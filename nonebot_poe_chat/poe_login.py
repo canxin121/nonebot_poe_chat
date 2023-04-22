@@ -1,6 +1,5 @@
 import asyncio
 import json
-from playwright.async_api import async_playwright
 async def submit_email(page,email):
     for i in range(5):
         try:

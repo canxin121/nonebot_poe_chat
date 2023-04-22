@@ -13,7 +13,7 @@ async def create_bot_async(page, botname, base_bot_index, prompt, retries=2):
             # 输入新的值
             await name_input.fill(botname)
 
-            base_select = await page.wait_for_selector('select[name="baseBot"]')
+            await page.wait_for_selector('select[name="baseBot"]')
             
             if base_bot_index == 1:
                 value = "chinchilla"

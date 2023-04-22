@@ -1,12 +1,9 @@
-import re, json, uuid, asyncio,string,random
-from nonebot import require
-require("nonebot_plugin_guild_patch")
-from nonebot_plugin_guild_patch import GuildMessageEvent
+import json,asyncio
 from nonebot.plugin import on_command, on
 from nonebot.params import ArgStr, CommandArg
 from nonebot.typing import T_State
 from nonebot.matcher import Matcher
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent,MessageSegment
+from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent
 from nonebot.internal.rule import Rule
 from playwright.async_api import async_playwright
 from .poe_chat import poe_chat
@@ -14,7 +11,7 @@ from .poe_create import poe_create
 from .poe_clear import poe_clear
 from .poe_login import submit_email, submit_code
 from .config import Config
-name = "nonebot_poe_chat"
+from .poe_func import reply_out,generate_uuid,generate_random_string,is_email
 #一些配置
 config = Config()
 user_dict = config.user_dict
@@ -25,23 +22,14 @@ cookie_path = config.cookie_path
 superusers = config.superusers
 is_cookie_exists = config.is_cookie_exists
 
-def reply_out(event: MessageEvent, content: MessageSegment | Message | str) -> Message:
-    """返回一个回复消息"""
-    if isinstance(event, GuildMessageEvent):
-        return Message(content)
-
-    return MessageSegment.reply(event.message_id) + content
 ######################################################
-#生成一个由qq号和nickname共同决定的uuid作为真名，防止重名
-def generate_uuid(s):
-    # 将字符串转换为 UUID 对象
-    uuid_object = uuid.uuid3(uuid.NAMESPACE_DNS, s)
-    # 获取 UUID 对象的 bytes 值
-    uuid_bytes = uuid_object.bytes
-    # 将 bytes 值转换为字符串
-    uuid_str = uuid_bytes.hex()[:14]
-    return uuid_str
 
+async def delete_messages(bot, user_id, dict_list):
+    if user_id in dict_list:
+        for eachmsg in dict_list[user_id]:
+            await bot.delete_msg(message_id=eachmsg['message_id'])
+        del dict_list[user_id]
+create_msgs = {}
 poe_create_ = on_command(
     "poecreate",
     aliases={
@@ -52,6 +40,7 @@ poe_create_ = on_command(
     block=False)
 @poe_create_.handle()
 async def __(matcher:Matcher,state: T_State,event: Event):
+    create_msgs[str(event.user_id)] = []
     state["user_id"] = str(event.user_id)
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
@@ -60,17 +49,25 @@ async def __(matcher:Matcher,state: T_State,event: Event):
             str_prompts = str()
             for key, _ in prompts_dict.items():
                 str_prompts += f"{key}\n"
-            await matcher.send(reply_out(event, f"当前预设有：\n{str_prompts}"))
+            # create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, f"当前预设有：\n{str_prompts}")))
+            msg = f"当前预设有：\n{str_prompts}\n请输入\n1.机器人名称,\n2.基础模型选项，可选项为（gpt3_5输入1,claude输入2）,\n3.自定义预设（预设内容中间不要有空格） 或 \".\" + 可用本地预设名\n三个参数中间用空格隔开\n最终格式示例:\n示例一：chat 2 一个智能助理\n示例二： claude 1 .默认\n输入取消 或 算了可以终止创建"
+            create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, msg)))
         else:
-            await matcher.send(reply_out(event, "当前没有本地预设"))
+            create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "")))
+            msg = f"当前没有可用本地预设\n\n请输入\n1.机器人名称,\n2.基础模型选项，可选项为（gpt3_5输入1,claude输入2）,\n3.自定义预设（预设内容中间不要有空格） 或 \".\" + 可用本地预设名\n三个参数中间用空格隔开\n最终格式示例:\n示例一：chat 2 一个智能助理\n示例二： claude 1 .默认\n输入取消 或 算了可以终止创建"
+            create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, msg)))
 
-@poe_create_.got('model',prompt='请输入\n1.机器人名称,\n2.基础模型选项，可选项为（gpt3_5输入1,claude输入2）,\n3.自定义预设（预设内容中间不要有空格） 或 "." + 可用本地预设名\n三个参数中间用空格隔开\n最终格式示例:\n示例一：chat 2 一个智能助理\n示例二： claude 1 .默认\n输入取消 或 算了可以终止创建')
-async def __poe_create___(matcher:Matcher,event:Event,state: T_State, infos: str = ArgStr("model")):
+@poe_create_.got('model')
+async def __poe_create___(bot: Bot,matcher: Matcher,event: Event,state: T_State, infos: str = ArgStr("model")):
     if infos in ["取消", "算了"]:
-        await matcher.finish(reply_out(event, "取消创建"))
+        create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "取消创建")))
+        await asyncio.sleep(1)
+        await delete_messages(bot,str(event.user_id),create_msgs)
+        await poe_create_.finish()
     infos = infos.split(" ")
     if not (len(infos) == 3 and infos[1] in ['1', '2']):
-        await matcher.reject(reply_out(event, "输入信息有误，请检查后重新输入"))
+        create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "输入信息有误，请检查后重新输入")))
+        await poe_create_.reject()
     #获取创建所需信息
     userid = str(state['user_id'])
     nickname = str(infos[0])
@@ -82,7 +79,8 @@ async def __poe_create___(matcher:Matcher,event:Event,state: T_State, infos: str
         if prompt_name in prompts_dict:
             prompt = prompts_dict[prompt_name]
         else:
-            await matcher.reject(reply_out(event, "输入的本地预设名不正确，请重新输入"))
+            create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "输入的本地预设名不正确，请重新输入")))
+            await poe_create_.reject()
     
     if not userid in user_dict:
         user_dict[userid] = {}
@@ -92,7 +90,8 @@ async def __poe_create___(matcher:Matcher,event:Event,state: T_State, infos: str
         user_dict[userid]['now'] = {}
     #查看对应用户下是不是有重名的bot
     if  nickname in user_dict[userid]['all']:
-        await matcher.reject(reply_out(event, "已经有同名的bot了，换一个名字重新输入吧"))
+        create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "已经有同名的bot了，换一个名字重新输入吧")))
+        await poe_create_.reject()
     else:
         is_created = await poe_create(cookie_path,truename,int(bot_index),prompt)
         if is_created:
@@ -105,15 +104,18 @@ async def __poe_create___(matcher:Matcher,event:Event,state: T_State, infos: str
             
             with open(user_path, 'w') as f:
                 json.dump(user_dict, f)
-            await matcher.finish(reply_out(event, "创建成功并切换到新建bot"))
-        else:
-            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+
+            await matcher.send(reply_out(event, "创建成功并切换到新建bot"))
+            await asyncio.sleep(1)
+            await delete_messages(bot,userid,create_msgs)
+            await poe_switch.finish()
+        else: 
+            await matcher.send(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+            await asyncio.sleep(1)
+            await delete_messages(bot,userid,create_msgs)
+            await poe_switch.finish()
 
 ######################################################    
-def generate_random_string(length=8):
-    """生成指定长度的随机字符串"""
-    letters = string.ascii_letters + string.digits
-    return ''.join(random.choice(letters) for _ in range(length))
 
 #保留上一个回答的chatsuggest
 chat_lock = asyncio.Semaphore(3)
@@ -263,7 +265,7 @@ async def __poe_clear___(event: Event,matcher:Matcher):
     else:
         msg = "出错了，多次错误请联系机器人主人"
     await matcher.finish(reply_out(event, msg))
-    
+switch_msgs = {}    
 ######################################################
 poe_switch = on_command(
     "poeswitch",
@@ -274,10 +276,11 @@ poe_switch = on_command(
     priority=4,
     block=False)
 @poe_switch.handle()
-async def __poe_switch__(matcher:Matcher,event: Event):
+async def __poe_switch__(bot:Bot ,matcher:Matcher,event: Event):
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
     userid = str(event.user_id)
+    switch_msgs[userid] = []
     if userid not in user_dict:
         await matcher.finish(reply_out(event, "你还没创建任何bot"))
     bots = list(user_dict[userid]["all"].keys())
@@ -285,20 +288,27 @@ async def __poe_switch__(matcher:Matcher,event: Event):
     # bot_truname = str(list(user_dict[userid]["now"].values())[0])
     nickname = str(list(user_dict[userid]["now"].keys())[0])
     if len(bots)==1:
-        await matcher.finish(reply_out(event, f"当前只有一个bot:{nickname}"))
-    msg = "你已经创建的的bot有：\n" + bot_str +f"\n当前使用的bot是{nickname}"
-    await matcher.send(reply_out(event, msg))
+        switch_msgs[userid].append(await matcher.send(reply_out(event, f"当前只有一个bot:{nickname}")))
+        await asyncio.sleep(1)
+        await delete_messages(bot,userid,switch_msgs)
+        await poe_switch.finish()
+    msg = "你已经创建的的bot有：\n" + bot_str +f"\n当前使用的bot是{nickname}\n\n请输入要切换的机器人名称"
+    switch_msgs[userid].append(await matcher.send(reply_out(event, msg)))
 
-@poe_switch.got('nickname',prompt='请输入要切换的机器人名称')
-async def __poe_switch____(matcher:Matcher,event: Event, infos: str = ArgStr("nickname")):
+@poe_switch.got('nickname')
+async def __poe_switch____(bot:Bot,matcher:Matcher,event: Event, infos: str = ArgStr("nickname")):
     userid = str(event.user_id)
     bots = list(user_dict[userid]["all"].keys())
     if infos in ["取消", "算了"]:
-        await matcher.finish(reply_out(event, "中断切换"))
+        switch_msgs[userid].append(await matcher.send(reply_out(event, "中断切换")))
+        await asyncio.sleep(1)
+        await delete_messages(bot,userid,switch_msgs)
+        await poe_switch.finish()
     infos = infos.split(" ")
     nickname = infos[0]
     if not (nickname in bots):
-        await matcher.reject(reply_out(event, "输入信息有误，请检查后重新输入"))
+        switch_msgs[userid].append(await matcher.send(reply_out(event, "输入信息有误，请检查后重新输入")))
+        await poe_switch.reject()
     to_truename = user_dict[userid]["all"][nickname]
     del user_dict[userid]["now"]
     user_dict[userid]["now"] = {}
@@ -306,7 +316,10 @@ async def __poe_switch____(matcher:Matcher,event: Event, infos: str = ArgStr("ni
     with open(user_path, 'w') as f:
         json.dump(user_dict, f)
     msg = f"已切换为{nickname}"
-    await matcher.finish(reply_out(event, msg))
+    await matcher.send(reply_out(event, msg))
+    await asyncio.sleep(1)
+    await delete_messages(bot,userid,switch_msgs)
+    await poe_switch.finish()
     
 ######################################################
 poe_remove = on_command(
@@ -328,10 +341,10 @@ async def __poe_remove__(matcher:Matcher,event: Event):
     bot_str = '\n'.join(str(bot) for bot in bots)
     # bot_truname = str(list(user_dict[userid]["now"].values())[0])
     nickname = str(list(user_dict[userid]["now"].keys())[0])
-    msg = "你已经创建的的bot有：\n" + bot_str +f"\n当前使用的bot是{nickname}"
+    msg = "你已经创建的的bot有：\n" + bot_str +f"\n当前使用的bot是{nickname}\n\n请输入要删除的机器人名称"
     await matcher.send(reply_out(event, msg))
 
-@poe_remove.got('nickname',prompt='请输入要删除的机器人名称')
+@poe_remove.got('nickname')
 async def __poe_remove____(matcher:Matcher,event: Event, infos: str = ArgStr("nickname")):
     userid = str(event.user_id)
     bots = list(user_dict[userid]["all"].keys())
@@ -350,11 +363,6 @@ async def __poe_remove____(matcher:Matcher,event: Event, infos: str = ArgStr("ni
     await matcher.finish(reply_out(event, f"已删除{nickname_delete}"))
     
 #####################################################
-
-def is_email(email):
-    pattern = r'^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$'
-    return bool(re.match(pattern, email))
-
 
 poe_login = on_command(
     "poelogin",
@@ -508,7 +516,7 @@ poe_help = on_command(
     priority=4,
     block=False)
 @poe_help.handle()
-async def __poe_help__(event: Event):
+async def __poe_help__(bot: Bot,event: Event):
     msg = (
     "-poe功能大全\n"
     "--注意所有功能都是用户独立的，每个用户只能操作自己的内容\n"
@@ -528,4 +536,7 @@ async def __poe_help__(event: Event):
     "~添加预设:poeaddprompt / 添加预设 / pap\n"
     "~删除预设:poeremoveprompt / 删除预设 / prp"
     )
-    await poe_help.finish(msg)
+    
+    helpmsg = await poe_help.send(msg)
+    await bot.delete_msg(message_id=helpmsg['message_id'])
+    await poe_help.finish()
