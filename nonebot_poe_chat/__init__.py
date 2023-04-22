@@ -538,5 +538,6 @@ async def __poe_help__(bot: Bot,event: Event):
     )
     
     helpmsg = await poe_help.send(msg)
+    await asyncio.sleep(30)
     await bot.delete_msg(message_id=helpmsg['message_id'])
     await poe_help.finish()
