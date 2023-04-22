@@ -33,8 +33,8 @@
 ~登录:poelogin / plogin / pl  
 ~添加预设:poeaddprompt / 添加预设 / pap  
 ~删除预设:poeremoveprompt / 删除预设 / prp  
-#安装  
-##step.1  
+# 安装  
+## step.1  
 ### nb安装  
 ```
 nb plugin install nonebot-poe-chat
@@ -44,7 +44,7 @@ nb plugin install nonebot-poe-chat
 pip install nonebot-poe-chat
 ```
  
-##step.2  
+## step.2  
 ```
 playwright install chromuim
 ```
