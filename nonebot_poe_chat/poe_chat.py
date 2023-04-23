@@ -3,7 +3,8 @@ import json
 import re
 from playwright.async_api import async_playwright
 from playwright.sync_api import Page
-
+from .config import Config
+config = Config()
 async def send_message_async(page: Page, botname: str, input_str: str):
     # 定义重试次数和重试间隔时间
     retry_count = 5
@@ -23,14 +24,14 @@ async def send_message_async(page: Page, botname: str, input_str: str):
             if text in content:
                 return "banned"
             # 找到输入框元素
-            input_box = await page.wait_for_selector('.ChatMessageInputView_textInput__Aervw')
+            input_box = await page.wait_for_selector('.ChatMessageInputView_textInput__Aervw',timeout=2000)
 
             # 将字符串发送到输入框中
             await input_box.fill(input_str)
 
-            # 找到发送按钮元素并点击
-            await page.wait_for_selector('button.Button_primary__pIDjn')
-            send_button = await page.wait_for_selector('button.Button_primary__pIDjn')
+            # 找到发送按钮元素并点击,容易点不到，多等一次
+            await page.wait_for_selector('button.Button_primary__pIDjn',timeout=1000)
+            send_button = await page.wait_for_selector('button.Button_primary__pIDjn',timeout=1000)
             # await asyncio.sleep(0.5)
             await send_button.click()
             # 发送成功后退出循环
@@ -70,15 +71,28 @@ async def get_message_async(page,botname, sleep):
                     return chat_list_text, string_list
         except :
             consecutive_errors += 1
-            print(consecutive_errors)
-            if consecutive_errors >= 10:
+            if consecutive_errors >= 5:
                 return False
         else:
             consecutive_errors = 0
 
 async def poe_chat(cookie_path,botname,question):
     async with async_playwright() as p:
-        browser = await p.chromium.launch()
+        server = config.server
+        username = config.username
+        passwd = config.passwd
+        proxy_config = {}
+        if server is not None:
+            proxy_config["server"] = server
+        if username is not None:
+            proxy_config["username"] = username
+        if passwd is not None:
+            proxy_config["password"] = passwd
+
+        if proxy_config:
+            browser = await p.chromium.launch(proxy=proxy_config)
+        else:
+            browser = await p.chromium.launch()
         context = await browser.new_context()
         page = await context.new_page()
         with open(cookie_path, 'r') as f:
@@ -87,14 +101,15 @@ async def poe_chat(cookie_path,botname,question):
         is_banned = await send_message_async(page, botname, question)
         if is_banned == "banned":
             return "banned"
-        result = await get_message_async(page, botname, sleep=5)
+        result = await get_message_async(page, botname, sleep=3)
         if isinstance(result, tuple):
             answers, suggests = result
+            return answers[-1],suggests
         elif isinstance(result, str):
             is_banned = result
             return "banned"
         elif isinstance(result, bool):
             is_got = result
+            return is_got
         else:
             raise ValueError("Unexpected return type from get_message_async")
-        return answers[-1],suggests

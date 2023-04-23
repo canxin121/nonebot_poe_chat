@@ -1,3 +1,0 @@
-nonebot==1.9.1
-nonebot_plugin_guild_patch==0.2.3
-playwright==1.32.1

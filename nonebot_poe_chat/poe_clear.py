@@ -1,7 +1,8 @@
 import asyncio
 import json
 from playwright.async_api import async_playwright
-
+from .config import Config
+config = Config()
 async def clear_bot(page, botname):
     try:
         await page.goto(f'https://poe.com/{botname}')
@@ -26,7 +27,21 @@ async def clear_bot(page, botname):
         
 async def poe_clear(cookie_path,botname):
     async with async_playwright() as p:
-        browser = await p.chromium.launch()
+        server = config.server
+        username = config.username
+        passwd = config.passwd
+        proxy_config = {}
+        if server is not None:
+            proxy_config["server"] = server
+        if username is not None:
+            proxy_config["username"] = username
+        if passwd is not None:
+            proxy_config["password"] = passwd
+
+        if proxy_config:
+            browser = await p.chromium.launch(proxy=proxy_config)
+        else:
+            browser = await p.chromium.launch()
         context = await browser.new_context()
         page = await context.new_page()
         with open(cookie_path, 'r') as f:

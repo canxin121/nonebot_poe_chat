@@ -1,6 +1,7 @@
 import json
 from playwright.async_api import async_playwright, ElementHandle
-
+from .config import Config
+config = Config()
 async def create_bot_async(page, botname, base_bot_index, prompt, retries=2):
     try:
         for i in range(retries):
@@ -54,7 +55,21 @@ async def create_bot_async(page, botname, base_bot_index, prompt, retries=2):
 # cookie_path = r"C:\Users\Administrator\Desktop\nonebot2\cccc\src\plugins\nonebot_poe_chat\data\poe_cookie.json"                      
 async def poe_create(cookie_path,botname, base_bot_index, prompt):
     async with async_playwright() as p:
-        browser = await p.chromium.launch()
+        server = config.server
+        username = config.username
+        passwd = config.passwd
+        proxy_config = {}
+        if server is not None:
+            proxy_config["server"] = server
+        if username is not None:
+            proxy_config["username"] = username
+        if passwd is not None:
+            proxy_config["password"] = passwd
+
+        if proxy_config:
+            browser = await p.chromium.launch(proxy=proxy_config)
+        else:
+            browser = await p.chromium.launch()
         context = await browser.new_context()
         page = await context.new_page()
         with open(cookie_path, 'r') as f:

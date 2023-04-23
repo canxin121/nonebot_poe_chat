@@ -1,5 +1,6 @@
 import asyncio
 import json
+
 async def submit_email(page,email):
     for i in range(5):
         try:

@@ -7,6 +7,20 @@
 
 ✨*基于Nonebot和playwright，可以将poe.com接入qq*✨
 
+</div>
+
+<p align="center">
+    <a href="https://pypi.python.org/pypi/nonebot-poe-chat">
+    <img src="https://img.shields.io/pypi/v/nonebot-poe-chat" alt="pypi">
+    </a>
+    <img src="https://img.shields.io/pypi/pyversions/nonebot-poe-chat" alt="python">
+    <img src="https://img.shields.io/pypi/dm/nonebot-poe-chat" alt="pypi">
+    <br />
+    <a href="https://onebot.dev/">
+    <img src="https://img.shields.io/badge/OneBot-v11-black?style=social&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAIVBMVEUAAAAAAAADAwMHBwceHh4UFBQNDQ0ZGRkoKCgvLy8iIiLWSdWYAAAAAXRSTlMAQObYZgAAAQVJREFUSMftlM0RgjAQhV+0ATYK6i1Xb+iMd0qgBEqgBEuwBOxU2QDKsjvojQPvkJ/ZL5sXkgWrFirK4MibYUdE3OR2nEpuKz1/q8CdNxNQgthZCXYVLjyoDQftaKuniHHWRnPh2GCUetR2/9HsMAXyUT4/3UHwtQT2AggSCGKeSAsFnxBIOuAggdh3AKTL7pDuCyABcMb0aQP7aM4AnAbc/wHwA5D2wDHTTe56gIIOUA/4YYV2e1sg713PXdZJAuncdZMAGkAukU9OAn40O849+0ornPwT93rphWF0mgAbauUrEOthlX8Zu7P5A6kZyKCJy75hhw1Mgr9RAUvX7A3csGqZegEdniCx30c3agAAAABJRU5ErkJggg==" alt="onebot">
+    <img src="https://img.shields.io/github/gist/last-commit/abaf34d1084111a563ac347fc6789dbe" alt="pypi">
+    </a>
+</p>
 <div align="left">
  
 ## 功能特性
@@ -17,8 +31,10 @@
 --如果未创建机器人，对话命令将默认创建gpt3.5  
 --可以直接回复机器人给你的回答来继续对话，无需命令  
 --可以使用数字索引来使用建议回复  
---机器人的回答会以回复形式发送  
---插件储存数据放置在./data/poe_chat中
+--机器人的回答会以回复形式发送，支持发送带二维码的图片格式和相应的链接  
+--机器人的时效性回复都会自动撤回，防止刷屏  
+--插件储存数据放置在./data/poe_chat中  
+--支持填写代理地址http,https,socks，及其username,password
 ## 功能使用
 --以下命令前面全部要加 /   
 ~帮助:poehelp / poe帮助
@@ -50,11 +66,21 @@ playwright install chromuim
 ```
 ## 配置（在.env中修改）  
 
+
 ```
 #poe_cookie,poe网站的ck，见后文截图，也可以不填，而使用/pl命令登陆
 poe_cookie = "f87HlVW~~%3D%3D"
 #poe_superusers，poe插件管理员qq号
 poe_superusers = ["123456","132145"]
+#默认True，表示是否以图片形式回复
+poe_picable = True
+#默认True, 表示是否在图片形式回复后跟上二维码的链接
+poe_urlable = True
+#代理地址以及验证信息，如果本地可以连接外网可以不填，以下只是示例，请根据需求填写
+poe_server = socks://127.0.0.1:7890
+poe_name = canxin
+poe_passwd = passwd
+
 ```
 ![ck获取](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/ck.png)
 ## 示例
@@ -64,3 +90,7 @@ poe_superusers = ["123456","132145"]
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(1).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(2).PNG) |
 | Image 3 | Image 4 |
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(3).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(4).PNG) |
+| Image 5 | Image 6 |
+| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(5).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(6).PNG) |
+| Image 7 | Image 8 |
+| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(7).PNG) | |

@@ -3,7 +3,7 @@ from nonebot.plugin import on_command, on
 from nonebot.params import ArgStr, CommandArg
 from nonebot.typing import T_State
 from nonebot.matcher import Matcher
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent
+from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent,MessageSegment
 from nonebot.internal.rule import Rule
 from playwright.async_api import async_playwright
 from .poe_chat import poe_chat
@@ -12,8 +12,21 @@ from .poe_clear import poe_clear
 from .poe_login import submit_email, submit_code
 from .config import Config
 from .poe_func import reply_out,generate_uuid,generate_random_string,is_email
+from .txt2img import Txt2Img
+txt2img = Txt2Img()
+
 #一些配置
 config = Config()
+server = config.server
+username = config.username
+passwd = config.passwd
+proxy_config = {}
+if server is not None:
+    proxy_config["server"] = server
+if username is not None:
+    proxy_config["username"] = username
+if passwd is not None:
+    proxy_config["password"] = passwd
 user_dict = config.user_dict
 prompts_dict = config.prompts_dict
 user_path = config.user_path
@@ -21,7 +34,8 @@ prompt_path = config.prompt_path
 cookie_path = config.cookie_path
 superusers = config.superusers
 is_cookie_exists = config.is_cookie_exists
-
+is_pic_able = config.pic_able
+is_url_able = config.url_able
 ######################################################
 
 async def delete_messages(bot, user_id, dict_list):
@@ -120,6 +134,7 @@ async def __poe_create___(bot: Bot,matcher: Matcher,event: Event,state: T_State,
 #保留上一个回答的chatsuggest
 chat_lock = asyncio.Semaphore(3)
 chat_suggest = {}
+last_messageid = {}
 waitque = []
 poe_chat_ = on_command(
     "poetalk",
@@ -131,7 +146,7 @@ poe_chat_ = on_command(
     block=False)
 @poe_chat_.handle()
 async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg()):
-    global chat_lock,chat_suggest
+    global chat_lock,chat_suggest,last_messageid
     userid = str(event.user_id)
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
@@ -179,7 +194,15 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
             suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(chat_suggest[userid])])
             msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
             waitque.remove(userid)
-            await matcher.finish(reply_out(event, msg))
+            if is_pic_able:
+                pic,url = await txt2img.draw(title=" ",text=msg)
+                if is_url_able:
+                    last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                else:
+                    last_messageid[userid] = await matcher.send(reply_out(event, pic))
+                matcher.finish()
+            else:
+                await matcher.finish(reply_out(event, msg))
         else:
             waitque.remove(userid)
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
@@ -188,14 +211,15 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
 #判断是不是同一个对话中
 async def _is_reply_(event:MessageEvent,bot:Bot):
     if bool(event.reply):
+        bot_id = bot.self_id
         reply = event.reply
         user_id = str(event.user_id)
-        bot_id = bot.self_id
         sender_id = str(reply.sender.user_id)
-        lastsuggest = str(reply.message).split("\n")[-1][3:]
-        if user_id in chat_suggest and sender_id == bot_id and lastsuggest == chat_suggest[user_id][-1]:
-            return True
-    return False
+        try:
+            if sender_id == bot_id and user_id in chat_suggest and last_messageid[user_id]["message_id"]==reply.message_id:
+                return True
+        except:
+            return False
 is_reply = Rule(_is_reply_)
 
 _poe_continue_ = on(rule=is_reply)
@@ -210,7 +234,7 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
     else:
         text = raw_message
     
-    global chat_lock
+    global chat_lock,last_messageid
     if chat_lock.locked():
         await matcher.send(reply_out(event, '请稍等,你前面已有3个用户'))
         
@@ -235,7 +259,15 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
             suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(chat_suggest[userid])])
             msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
             waitque.remove(userid)
-            await matcher.finish(reply_out(event, msg))
+            if is_pic_able:
+                pic,url = await txt2img.draw(title=" ",text=msg)
+                if is_url_able:
+                    last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                else:
+                    last_messageid[userid] = await matcher.send(reply_out(event, pic))
+                matcher.finish()
+            else:
+                await matcher.finish(reply_out(event, msg))
         else:
             waitque.remove(userid)
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
@@ -257,6 +289,8 @@ async def __poe_clear___(event: Event,matcher:Matcher):
     
     if userid not in user_dict:
         await matcher.finish(reply_out(event, "你还没有创建任何bot"))
+    if userid in waitque:
+        await matcher.finish(reply_out(event, "你现在有一个回话在进行中，不能清除历史记录"))
     botname = str(list(user_dict[userid]["now"].values())[0])
     nickname = str(list(user_dict[userid]["now"].keys())[0])
     is_cleared = await poe_clear(cookie_path,botname)
@@ -320,7 +354,7 @@ async def __poe_switch____(bot:Bot,matcher:Matcher,event: Event, infos: str = Ar
     await asyncio.sleep(1)
     await delete_messages(bot,userid,switch_msgs)
     await poe_switch.finish()
-    
+remove_list = {}    
 ######################################################
 poe_remove = on_command(
     "poeremove",
@@ -335,6 +369,7 @@ async def __poe_remove__(matcher:Matcher,event: Event):
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
     userid = str(event.user_id)
+    remove_list[userid] = []
     if userid not in user_dict:
         await matcher.finish(reply_out(event, "你还没创建任何bot"))
     bots = list(user_dict[userid]["all"].keys())
@@ -342,26 +377,33 @@ async def __poe_remove__(matcher:Matcher,event: Event):
     # bot_truname = str(list(user_dict[userid]["now"].values())[0])
     nickname = str(list(user_dict[userid]["now"].keys())[0])
     msg = "你已经创建的的bot有：\n" + bot_str +f"\n当前使用的bot是{nickname}\n\n请输入要删除的机器人名称"
-    await matcher.send(reply_out(event, msg))
+    remove_list[userid].append(await matcher.send(reply_out(event, msg)))
 
 @poe_remove.got('nickname')
-async def __poe_remove____(matcher:Matcher,event: Event, infos: str = ArgStr("nickname")):
+async def __poe_remove____(bot:Bot,matcher:Matcher,event: Event, infos: str = ArgStr("nickname")):
     userid = str(event.user_id)
     bots = list(user_dict[userid]["all"].keys())
     if infos in ["取消", "算了"]:
-        await matcher.finish(reply_out(event, "终止切换"))
+        remove_list[userid].append(await matcher.send(reply_out(event, "终止切换")))
+        await asyncio.sleep(1)
+        await delete_messages(bot,userid,remove_list)
     infos = infos.split(" ")
     nickname_delete = infos[0]
     nickname_now = str(list(user_dict[userid]["now"].keys())[0])
     if not (nickname_delete in bots): 
-        await matcher.reject(reply_out(event, "输入信息有误，请检查后重新输入"))
+        remove_list[userid].append(await matcher.send(reply_out(event, "输入信息有误，请检查后重新输入")))
+        await poe_remove.reject()
     if nickname_delete == nickname_now:
-        await matcher.finish(reply_out(event, "不能删除正在使用的bot哦"))
+        remove_list[userid].append(await matcher.send(reply_out(event, "不能删除正在使用的bot哦")))
+        await asyncio.sleep(1)
+        await delete_messages(bot,userid,remove_list)
+        await poe_remove.finish()
     del user_dict[userid]["all"][nickname_delete]
     with open(user_path, 'w') as f:
         json.dump(user_dict, f)
-    await matcher.finish(reply_out(event, f"已删除{nickname_delete}"))
-    
+    await matcher.send(reply_out(event, f"已删除{nickname_delete}"))
+    await delete_messages(bot, userid, remove_list)
+    await matcher.finish()
 #####################################################
 
 poe_login = on_command(
@@ -392,10 +434,12 @@ async def __poe_login____(event: Event, state: T_State, infos: str = ArgStr("mai
         await poe_login.reject("你输入的邮箱有误，请重新输入")
 
     playwright = await create_playwright_instance()
-    browser = await playwright.chromium.launch()
+    if proxy_config:
+        browser = await playwright.chromium.launch(proxy=proxy_config,headless=False)
+    else:
+        browser = await playwright.chromium.launch()
     context = await browser.new_context()
     page = await context.new_page()
-
     state["playwright"] = playwright
     state["browser"] = browser
     state["context"] = context
@@ -518,7 +562,6 @@ poe_help = on_command(
 @poe_help.handle()
 async def __poe_help__(bot: Bot,event: Event):
     msg = (
-    "-poe功能大全\n"
     "--注意所有功能都是用户独立的，每个用户只能操作自己的内容\n"
     "--所有分步操作都可以用 取消 或 算了来终止,并且支持错误重输\n"
     "--如果未创建机器人，对话命令将默认创建gpt3.5\n"
@@ -537,7 +580,8 @@ async def __poe_help__(bot: Bot,event: Event):
     "~删除预设:poeremoveprompt / 删除预设 / prp"
     )
     
-    helpmsg = await poe_help.send(msg)
+    pic = await txt2img.draw(title="poe功能大全",text=msg)
+    helpmsg = await poe_help.send(MessageSegment.image(pic))
     await asyncio.sleep(30)
     await bot.delete_msg(message_id=helpmsg['message_id'])
     await poe_help.finish()
