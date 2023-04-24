@@ -57,7 +57,8 @@ class Config:
         except:
             pass
         try:
-            self.pic_able = nonebot.get_driver().config.poe_picable
+            if nonebot.get_driver().config.poe_picable == "False":
+                self.pic_able = False
         except:
             pass
         try:
@@ -73,7 +74,8 @@ class Config:
         except:
             pass
         try:
-            self.url_able = nonebot.get_driver().config.poe_urlable
+            if nonebot.get_driver().config.poe_urlable == "False":
+                self.url_able = False
         except:
             pass
         
@@ -94,15 +96,18 @@ class Config:
         except:
             pass
         
-        # 检查并加载prompts配置文件
         if not os.path.exists(self.prompt_path):
-            with open(self.prompt_path, 'w',encoding='utf-8') as f:
-                f.write('{"默认":"一个ai语言模型"}')
-                print('poe_prompt.json 创建成功')
+            # 获取目录路径
+            dir_path = os.path.dirname(self.prompt_path)
+            # 如果目录不存在，则创建目录
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            with open(self.prompt_path, 'w') as f:
+                f.write('{"\u9ed8\u8ba4": "\u4e00\u4e2aai\u8bed\u8a00\u6a21\u578b"}')
+                print('prompt_dict.json 创建成功')
             
-        try:
-            with open(self.prompt_path, 'r') as f:
-                self.prompts_dict = json.load(f)
-                
-        except:
-            pass
+        
+        with open(self.prompt_path, 'r') as f:
+            self.prompts_dict = json.load(f)
+
+

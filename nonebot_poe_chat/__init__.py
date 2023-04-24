@@ -164,7 +164,7 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
                 json.dump(user_dict, f)
             await matcher.send(reply_out(event, "自动创建gpt3.5成功"))
         else:
-            await matcher.send(reply_out(event, "自动创建gpt3.5失败，多次失败请联系机器人管理员"))
+            await matcher.finish(reply_out(event, "自动创建gpt3.5失败，多次失败请联系机器人管理员"))
     if userid in chat_suggest and len(str(args[0])) == 1 and str(args[0]) in ['1','2','3','4']:
         text = chat_suggest[userid][int(str(args[0]))-1]
     else:
@@ -202,7 +202,8 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
                     last_messageid[userid] = await matcher.send(reply_out(event, pic))
                 matcher.finish()
             else:
-                await matcher.finish(reply_out(event, msg))
+                last_messageid[userid] = await matcher.send(reply_out(event, msg))
+                matcher.finish()
         else:
             waitque.remove(userid)
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
@@ -267,7 +268,8 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
                     last_messageid[userid] = await matcher.send(reply_out(event, pic))
                 matcher.finish()
             else:
-                await matcher.finish(reply_out(event, msg))
+                last_messageid[userid] = await matcher.send(reply_out(event, msg))
+                matcher.finish()
         else:
             waitque.remove(userid)
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
@@ -387,6 +389,7 @@ async def __poe_remove____(bot:Bot,matcher:Matcher,event: Event, infos: str = Ar
         remove_list[userid].append(await matcher.send(reply_out(event, "终止切换")))
         await asyncio.sleep(1)
         await delete_messages(bot,userid,remove_list)
+        await matcher.finish()
     infos = infos.split(" ")
     nickname_delete = infos[0]
     nickname_now = str(list(user_dict[userid]["now"].keys())[0])
@@ -536,12 +539,12 @@ async def __poe_removeprompt__(event: Event):
             str_prompts += f"{key}\n"
         await poe_removeprompt.send(f"当前预设有：\n{str_prompts}")
 
-@poe_removeprompt.got('name',prompt='请输入预设名称')
+@poe_removeprompt.got('name',prompt='请输入要删除的预设名称')
 async def __poe_removeprompt____(event: Event, infos: str = ArgStr("name")):
     global driver
     userid = str(event.user_id)
     if infos in ["取消", "算了"]:
-        await poe_removeprompt.finish("终止添加")
+        await poe_removeprompt.finish("终止删除")
     infos = infos.split(" ")
     if len(infos) != 1 or infos[0] not in prompts_dict:
         await poe_removeprompt.reject("你输入的信息有误，请检查后重新输入")
@@ -579,9 +582,11 @@ async def __poe_help__(bot: Bot,event: Event):
     "~添加预设:poeaddprompt / 添加预设 / pap\n"
     "~删除预设:poeremoveprompt / 删除预设 / prp"
     )
-    
-    pic = await txt2img.draw(title="poe功能大全",text=msg)
-    helpmsg = await poe_help.send(MessageSegment.image(pic))
-    await asyncio.sleep(30)
+    if is_pic_able:
+        pic, url= await txt2img.draw(title="poe功能大全",text=msg)
+        helpmsg = await poe_help.send(MessageSegment.image(pic))
+    else:
+        helpmsg = await poe_help.send(MessageSegment.text("*poe功能大全\n") + MessageSegment.text(msg))
+    await asyncio.sleep(60)
     await bot.delete_msg(message_id=helpmsg['message_id'])
     await poe_help.finish()

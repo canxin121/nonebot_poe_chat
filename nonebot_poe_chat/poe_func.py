@@ -42,13 +42,20 @@ async def get_qr_img(text):
     """将 Markdown 文本保存到 Mozilla Pastebin，并获得 URL"""
     async with aiohttp.ClientSession() as session:
         payload = {'expires': '86400', 'format': 'url', 'lexer': '_markdown', 'content': text}
-        try:
-            async with session.post('https://pastebin.mozilla.org/api/',
-                                    data=payload) as resp:
-                resp.raise_for_status()
-                url = await resp.text()
-                url = url[0:-1]
-        except Exception as e:
-            url = f"上传失败：{str(e)}"
-        image = qrcode.make(url)
-        return image,url
+        retries = 3
+        while retries > 0:
+            try:
+                async with session.post('https://pastebin.mozilla.org/api/',
+                                        data=payload) as resp:
+                    resp.raise_for_status()
+                    url = await resp.text()
+                    url = url[0:-1]
+                    image = qrcode.make(url)
+                    return image, url
+            except Exception as e:
+                retries -= 1
+                if retries == 0:
+                    url = f"上传失败：{str(e)}"
+                    image = qrcode.make(url)
+                    return image, url
+                await asyncio.sleep(1)
