@@ -94,3 +94,8 @@ poe_passwd = passwd
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(5).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(6).PNG) |
 | Image 7 | Image 8 |
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(7).PNG) | |
+
+## 更新
+2023/4/26:  
+    1.单例模式重构，只创建一个context，稍微减轻性能消耗
+    2.暂时修复poe官网suggest消失造成死循环的bug

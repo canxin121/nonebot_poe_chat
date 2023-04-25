@@ -5,28 +5,17 @@ from nonebot.typing import T_State
 from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent,MessageSegment
 from nonebot.internal.rule import Rule
-from playwright.async_api import async_playwright
-from .poe_chat import poe_chat
-from .poe_create import poe_create
-from .poe_clear import poe_clear
-from .poe_login import submit_email, submit_code
 from .config import Config
-from .poe_func import reply_out,generate_uuid,generate_random_string,is_email
+from .poe_func import reply_out,generate_uuid,generate_random_string,is_email,delete_messages
+from .poe_api import poe_chat,poe_create,poe_clear,submit_email, submit_code
 from .txt2img import Txt2Img
+from .pwframework import PlaywrightFramework
+#初始化两个需要使用的实例
+pwfw = PlaywrightFramework()
 txt2img = Txt2Img()
 
 #一些配置
 config = Config()
-server = config.server
-username = config.username
-passwd = config.passwd
-proxy_config = {}
-if server is not None:
-    proxy_config["server"] = server
-if username is not None:
-    proxy_config["username"] = username
-if passwd is not None:
-    proxy_config["password"] = passwd
 user_dict = config.user_dict
 prompts_dict = config.prompts_dict
 user_path = config.user_path
@@ -36,14 +25,9 @@ superusers = config.superusers
 is_cookie_exists = config.is_cookie_exists
 is_pic_able = config.pic_able
 is_url_able = config.url_able
-######################################################
-
-async def delete_messages(bot, user_id, dict_list):
-    if user_id in dict_list:
-        for eachmsg in dict_list[user_id]:
-            await bot.delete_msg(message_id=eachmsg['message_id'])
-        del dict_list[user_id]
+######################################################        
 create_msgs = {}
+create_pages = {}
 poe_create_ = on_command(
     "poecreate",
     aliases={
@@ -107,7 +91,13 @@ async def __poe_create___(bot: Bot,matcher: Matcher,event: Event,state: T_State,
         create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "已经有同名的bot了，换一个名字重新输入吧")))
         await poe_create_.reject()
     else:
-        is_created = await poe_create(cookie_path,truename,int(bot_index),prompt)
+        create_pages[userid] = await pwfw.new_page()
+        is_created = await poe_create(page=create_pages[userid],botname=truename,base_bot_index=int(bot_index),prompt=prompt)
+        try:
+            await create_pages[userid].close()
+        except:
+            pass
+        del create_pages[userid]
         if is_created:
             # # 将更新后的字典写回到JSON文件中
             user_dict[userid]['all'][nickname] = truename
@@ -131,11 +121,13 @@ async def __poe_create___(bot: Bot,matcher: Matcher,event: Event,state: T_State,
 
 ######################################################    
 
-#保留上一个回答的chatsuggest
+
 chat_lock = asyncio.Semaphore(3)
+#像这样的全局变量都是临时的
 chat_suggest = {}
 last_messageid = {}
-waitque = []
+chat_pages = {}
+
 poe_chat_ = on_command(
     "poetalk",
     aliases={
@@ -146,14 +138,22 @@ poe_chat_ = on_command(
     block=False)
 @poe_chat_.handle()
 async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg()):
-    global chat_lock,chat_suggest,last_messageid
+    global chat_lock,chat_suggest,last_messageid,chat_pages,create_pages
     userid = str(event.user_id)
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
     if userid not in user_dict:
         random = generate_random_string()
         truename = str(generate_uuid(str(userid + random)))
-        is_created = await poe_create(cookie_path,truename,1,"一个智能助理")
+        
+        create_pages[userid] = await pwfw.new_page()
+        is_created = await poe_create(create_pages[userid],truename,1,"一个智能助理")
+        try:
+            await create_pages[userid].close()
+        except:
+            pass
+        del create_pages[userid]
+        
         if is_created:
             user_dict[userid] = {}        
             user_dict[userid]['all'] = {}
@@ -170,19 +170,23 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
     else:
         text = str(args[0])
     botname = str(list(user_dict[userid]["now"].values())[0])
-    if userid in waitque:
+    if userid in chat_pages:
         await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后再发送"))
     if chat_lock.locked():
         await matcher.send(reply_out(event, "请稍等,你前面已有3个用户,你的回答稍后就来"))
     async with chat_lock:
-        waitque.append(userid)
-        result = await poe_chat(cookie_path, botname, text)
+        chat_pages[userid] = await pwfw.new_page()
+        result = await poe_chat(botname, text, chat_pages[userid])
+        try:
+            await chat_pages[userid].close()
+        except:
+            pass
+        del chat_pages[userid]
         if isinstance(result, tuple):
             last_answer, chat_suggest[userid] = result
             is_successful = True
         elif isinstance(result, str):
             if "banned" == result:
-                waitque.remove(userid)
                 await matcher.finish(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
         elif isinstance(result, bool):
             is_successful = result
@@ -193,7 +197,6 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
         if is_successful:
             suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(chat_suggest[userid])])
             msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
-            waitque.remove(userid)
             if is_pic_able:
                 pic,url = await txt2img.draw(title=" ",text=msg)
                 if is_url_able:
@@ -205,7 +208,6 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
                 last_messageid[userid] = await matcher.send(reply_out(event, msg))
                 matcher.finish()
         else:
-            waitque.remove(userid)
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
 
 ######################################################
@@ -226,40 +228,42 @@ is_reply = Rule(_is_reply_)
 _poe_continue_ = on(rule=is_reply)
 @_poe_continue_.handle()
 async def __poe_continue__(matcher: Matcher,event:MessageEvent):
+    global chat_lock,last_messageid,chat_pages
     userid = str(event.user_id)
     raw_message = str(event.message)
-    if userid in waitque:
+    if userid in chat_pages:
         await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后在发送"))
     if userid in chat_suggest and len(raw_message) == 1 and raw_message in ['1','2','3','4']:
             text = chat_suggest[userid][int(raw_message)-1]
     else:
         text = raw_message
-    
-    global chat_lock,last_messageid
+
     if chat_lock.locked():
         await matcher.send(reply_out(event, '请稍等,你前面已有3个用户'))
         
     botname = str(list(user_dict[userid]["now"].values())[0])
         
     async with chat_lock:
-        waitque.append(userid)
-        result = await poe_chat(cookie_path, botname, text)
+        chat_pages[userid] = await pwfw.new_page()
+        result = await poe_chat(botname, text, chat_pages[userid])
+        try:
+            await chat_pages[userid].close()
+        except:
+            pass
+        del chat_pages[userid]
         if isinstance(result, tuple):
             last_answer, chat_suggest[userid] = result
             is_successful = True
         elif isinstance(result, str):
             if "banned" == result:
-                waitque.remove(userid)
                 await matcher.finish(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
         elif isinstance(result, bool):
             is_successful = result
         else:
             raise ValueError("Unexpected return type from get_message_async")
-
         if is_successful:
             suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(chat_suggest[userid])])
             msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
-            waitque.remove(userid)
             if is_pic_able:
                 pic,url = await txt2img.draw(title=" ",text=msg)
                 if is_url_able:
@@ -271,10 +275,9 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
                 last_messageid[userid] = await matcher.send(reply_out(event, msg))
                 matcher.finish()
         else:
-            waitque.remove(userid)
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
-    
 ######################################################   
+clear_pages = {}
 poe_clear_ = on_command(
     "poedump",
     aliases={
@@ -291,18 +294,25 @@ async def __poe_clear___(event: Event,matcher:Matcher):
     
     if userid not in user_dict:
         await matcher.finish(reply_out(event, "你还没有创建任何bot"))
-    if userid in waitque:
+    if userid in chat_pages:
         await matcher.finish(reply_out(event, "你现在有一个回话在进行中，不能清除历史记录"))
     botname = str(list(user_dict[userid]["now"].values())[0])
     nickname = str(list(user_dict[userid]["now"].keys())[0])
-    is_cleared = await poe_clear(cookie_path,botname)
+    clear_pages[userid] = await pwfw.new_page()
+    is_cleared = await poe_clear(page=clear_pages[userid],botname=botname)
+    try:
+        await clear_pages[userid].close()
+    except:
+        pass
+    del clear_pages[userid] 
     if is_cleared:
         msg = f"成功清除了{nickname}的历史消息"
     else:
         msg = "出错了，多次错误请联系机器人主人"
     await matcher.finish(reply_out(event, msg))
-switch_msgs = {}    
+    
 ######################################################
+switch_msgs = {}
 poe_switch = on_command(
     "poeswitch",
     aliases={
@@ -418,36 +428,15 @@ poe_login = on_command(
     priority=4,
     block=False)
 
-global_playwright = None
-#创建一个全局的浏览器，在两个def中使用
-async def create_playwright_instance():
-    global global_playwright
-    if not global_playwright:
-        global_playwright = await async_playwright().start()
-    return global_playwright
-
 @poe_login.got('mail', prompt='请输入邮箱')
 async def __poe_login____(event: Event, state: T_State, infos: str = ArgStr("mail")):
-    global driver, global_playwright
-    userid = str(event.user_id)
     if infos in ["取消", "算了"]:
         await poe_login.finish("终止登陆")
     infos = infos.split(" ")
     if len(infos) != 1 or not is_email(infos[0]):
         await poe_login.reject("你输入的邮箱有误，请重新输入")
-
-    playwright = await create_playwright_instance()
-    if proxy_config:
-        browser = await playwright.chromium.launch(proxy=proxy_config,headless=False)
-    else:
-        browser = await playwright.chromium.launch()
-    context = await browser.new_context()
-    page = await context.new_page()
-    state["playwright"] = playwright
-    state["browser"] = browser
-    state["context"] = context
+    page = await pwfw.new_page()
     state["page"] = page
-
     is_submitted_email = await submit_email(page, infos[0])
     if is_submitted_email:
         await poe_login.send("填写邮箱成功")
@@ -456,24 +445,26 @@ async def __poe_login____(event: Event, state: T_State, infos: str = ArgStr("mai
 
 @poe_login.got('code', prompt='请输入验证码')
 async def __poe_login____(event: Event, state: T_State, infos: str = ArgStr("code")):
-    global is_cookie_exists, global_playwright
+    global is_cookie_exists
     if infos in ["取消", "算了"]:
         await poe_login.finish("终止登陆")
     infos = infos.split(" ")
     if len(infos) != 1 or len(infos[0]) != 6:
         await poe_login.finish("你输入的验证码有误，请重新登陆")
-
-    playwright = state["playwright"]
     page = state["page"]
-    browser = state["browser"]
-    context = state["context"]
     is_submitted_code = await submit_code(page, infos[0], cookie_path)
     if is_submitted_code:
-        await browser.close()
+        try:
+            await page.close()
+        except:
+            pass
         is_cookie_exists = True
         await poe_login.finish("登陆成功")
     else:
-        await browser.close()
+        try:
+            await page.close()
+        except:
+            pass
         await poe_login.finish("出错了，可以换个邮箱试试，多次失败请自行提取cookie")
         
 ######################################################

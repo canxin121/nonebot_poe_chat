@@ -1,5 +1,3 @@
-import base64
-from io import BytesIO
 from typing import Union
 import re, uuid, asyncio,string,random
 import aiohttp
@@ -59,3 +57,8 @@ async def get_qr_img(text):
                     image = qrcode.make(url)
                     return image, url
                 await asyncio.sleep(1)
+async def delete_messages(bot, user_id, dict_list):
+    if user_id in dict_list:
+        for eachmsg in dict_list[user_id]:
+            await bot.delete_msg(message_id=eachmsg['message_id'])
+        del dict_list[user_id]

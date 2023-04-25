@@ -6,8 +6,7 @@ def check_cookie(self):
     if os.path.exists(self.cookie_path):
         try:
             with open(self.cookie_path, 'r') as f:
-                cookies = json.load(f)
-            for cookie in cookies:
+                cookie = json.load(f)
                 if all(key in cookie for key in ('domain', 'name', 'path')) and 'value' in cookie:
                     if cookie['domain'] == 'poe.com' and cookie['name'] == 'p-b' and cookie['path'] == '/':
                         return True
@@ -36,6 +35,8 @@ def check_cookie(self):
             json.dump(cookie_parms, f)
         return True
     return False
+
+
 class Config:
     def __init__(self):
         self.path_ = str(Path()) + "/data/poe_chat"
@@ -47,10 +48,16 @@ class Config:
         self.server = None
         self.username = None
         self.passwd = None
+        
         self.superusers = []
+        self.cookie_dict = {}
         self.user_dict = {}
         self.prompts_dict = {}
         self.is_cookie_exists = check_cookie(self)
+        if self.is_cookie_exists:
+            with open(self.cookie_path, 'r') as f:
+                cookies = json.load(f)
+                self.cookie_dict =cookies
         # 加载超级用户配置
         try:
             self.superusers = nonebot.get_driver().config.poe_superusers
