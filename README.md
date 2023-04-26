@@ -24,8 +24,8 @@
 </p>
 <div align="left">
  
-详细教程跳转👇  
-[残心小站-文档库](https://canxin121.github.io/docs/](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
+> 详细教程跳转👇  
+> [残心小站-文档库](https://canxin121.github.io/docs/](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
 ## 功能特性
 - 可以使用gpt3.5和claude两种模型，支持自定义预设和本地预设  
 - 可以使用neeva ai搜索引擎  
