@@ -25,41 +25,41 @@
 <div align="left">
  
 ## 功能特性
---可以使用gpt3.5和claude两种模型，支持自定义预设和本地预设  
---可以使用neeva ai搜索引擎  
---有共享的机器人供多人共同使用   
---有完备的等待队列，又支持每次几名用户同时请求  
---注意所有功能都是用户独立的，每个用户只能操作自己的内容  
---所有分步操作都可以用 取消 或 算了来终止,并且支持错误重输  
---如果未创建机器人，对话命令将默认创建gpt3.5  
---可以直接回复机器人给你的回答来继续对话，无需命令  
---可以使用数字索引来使用建议回复  
---机器人的回答会以回复形式发送，支持发送带二维码的图片格式和相应的链接  
---机器人的时效性回复都会自动撤回，防止刷屏  
---插件储存数据放置在./data/poe_chat中  
---支持填写代理地址http,https,socks，及其username,password
+- 可以使用gpt3.5和claude两种模型，支持自定义预设和本地预设  
+- 可以使用neeva ai搜索引擎  
+- 有共享的机器人供多人共同使用   
+- 有完备的等待队列，又支持每次几名用户同时请求  
+- 注意所有功能都是用户独立的，每个用户只能操作自己的内容  
+- 所有分步操作都可以用 取消 或 算了来终止,并且支持错误重输  
+- 如果未创建机器人，对话命令将默认创建gpt3.5  
+- 可以直接回复机器人给你的回答来继续对话，无需命令  
+- 可以使用数字索引来使用建议回复  
+- 机器人的回答会以回复形式发送，支持发送带二维码的图片格式和相应的链接  
+- 机器人的时效性回复都会自动撤回，防止刷屏  
+- 插件储存数据放置在./data/poe_chat中  
+- 支持填写代理地址http,https,socks，及其username,password
 ## 功能使用
---以下命令前面全部要加 /   
+- 以下命令前面全部要加 /   
 ************************  
---以下命令均支持用户隔离  
-~对话:poetalk / ptalk / pt  
-~清空历史对话:poedump / pdump / pd  
-~创建机器人:poecreate / 创建bot / pc  
-~删除机器人:poeremove / 删除bot / pr  
-~切换机器人:poeswitch / 切换bot / ps\n  
+- 以下命令均支持用户隔离  
+- 对话:poetalk / ptalk / pt  
+- 清空历史对话:poedump / pdump / pd  
+- 创建机器人:poecreate / 创建bot / pc  
+- 删除机器人:poeremove / 删除bot / pr  
+- 切换机器人:poeswitch / 切换bot / ps\n  
 ************************  
---以下命令均是多用户共享的  
-~搜索引擎返回的是链接及标题  
-~NeevaAI搜索引擎:poeneeva / pneeva / pn  
-~共享的gpt对话:poesharegpt / psharegpt / psg  
-~清空共享的gpt的对话历史:poegptdump / poegpt清除 / pgd  
-~共享的claude对话:poeshareclaude / pshareclaude / psc  
-~清空共享的claude的对话历史:poeclaudedump / poeclaude清除 / pcd  
+- 以下命令均是多用户共享的  
+- 搜索引擎返回的是链接及标题  
+- NeevaAI搜索引擎:poeneeva / pneeva / pn  
+- 共享的gpt对话:poesharegpt / psharegpt / psg  
+- 清空共享的gpt的对话历史:poegptdump / poegpt清除 / pgd  
+- 共享的claude对话:poeshareclaude / pshareclaude / psc  
+- 清空共享的claude的对话历史:poeclaudedump / poeclaude清除 / pcd  
 ************************  
---以下功能仅限poe管理员使用  
-~登录:poelogin / plogin / pl  
-~添加预设:poeaddprompt / 添加预设 / pap  
-~删除预设:poeremoveprompt / 删除预设 / prp"
+- 以下功能仅限poe管理员使用  
+- 登录:poelogin / plogin / pl  
+- 添加预设:poeaddprompt / 添加预设 / pap  
+- 删除预设:poeremoveprompt / 删除预设 / prp"
 # 安装  
 ## step.1  
 ### nb安装  
@@ -84,7 +84,7 @@ playwright install chromium
 #poe_cookie,poe网站的ck，见后文截图，也可以不填，而使用/pl命令登陆
 #（pl登录暂时不稳定，可以自行尝试一下，不行就手动填cookie）
 #1.    
-poe_cookie = "f87HlVW~~%3D%3D"
+poe_cookie = "f87HlVW- %3D%3D"
 #poe_superusers，poe插件管理员qq号
 poe_superusers = ["123456","132145"]
 #默认True，表示是否以图片形式回复
@@ -109,7 +109,7 @@ poe_passwd = passwd
 ## 示例
 
 | Image 1 | Image 2 |
-|:-------:|:-------:|
+|:- -:|:- -:|
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(1).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(2).PNG) |
 | Image 3 | Image 4 |
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(3).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(4).PNG) |
