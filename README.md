@@ -119,7 +119,7 @@ poe_passwd = passwd
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(7).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(8).PNG) |
 
 ## 更新
-2023/4/26 v1.0.9:  
+- 2023/4/26 v1.0.9:  
     1.修复cookie致命bug  
     2./pl登录可能暂时不好用了，因为poe在检测机器人登录，请自行填写ck  
     3.新增neevaAi搜索功能  
@@ -127,6 +127,6 @@ poe_passwd = passwd
     5.修复自定义预设中间有空格造成错误的bug  
     6.补上了创建bot的代码的lock  
     7.恢复正常的suggest，并修复了一个由suggest引起的死循环bug  
-2023/4/26 v1.0.8:  
+- 2023/4/26 v1.0.8:  
     1.单例模式重构，只创建一个context，稍微减轻性能消耗  
     2.暂时修复poe官网suggest消失造成死循环的bug  
