@@ -81,19 +81,25 @@ playwright install chromium
 ```
 #poe_cookie,poe网站的ck，见后文截图，也可以不填，而使用/pl命令登陆
 #（pl登录暂时不稳定，可以自行尝试一下，不行就手动填cookie）
+#1.    
 poe_cookie = "f87HlVW~~%3D%3D"
 #poe_superusers，poe插件管理员qq号
 poe_superusers = ["123456","132145"]
 #默认True，表示是否以图片形式回复
+#2.
 poe_picable = True
 #默认True, 表示是否在图片形式回复后跟上二维码的链接
+#3.
 poe_urlable = True
 #代理地址如果你的电脑直接就能访问外网，也就是系统代理，请不填写，不要留空，直接不填
 #如果你只开启了局域网代理，则填写响应信息
 #代理地址以及验证信息，以下只是示例，请根据需求填写
+#4.
 poe_server = socks://127.0.0.1:7890
 #如果没有验证用的账号密码，不要写下面这两项
+#5.
 poe_name = canxin
+#6.
 poe_passwd = passwd
 
 ```
