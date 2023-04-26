@@ -37,9 +37,10 @@
 --支持填写代理地址http,https,socks，及其username,password
 ## 功能使用
 --以下命令前面全部要加 /   
-~帮助:poehelp / poe帮助
+~帮助:poehelp / poe帮助  
 ~对话:poetalk / ptalk / pt  
 ~清空历史对话:poedump / pdump / pd  
+~NeevaAI搜索:poeneeva / pneeva / pn  
 ~创建机器人:poecreate / 创建bot / pc  
 ~删除机器人:poeremove / 删除bot / pr  
 ~切换机器人:poeswitch / 切换bot / ps  
@@ -76,7 +77,8 @@ poe_superusers = ["123456","132145"]
 poe_picable = True
 #默认True, 表示是否在图片形式回复后跟上二维码的链接
 poe_urlable = True
-#代理地址以及验证信息，如果本地可以连接外网可以不填，以下只是示例，请根据需求填写
+#代理地址如果你的电脑直接就能访问外网，请不填写，不要留空，直接不填
+#代理地址以及验证信息，以下只是示例，请根据需求填写
 poe_server = socks://127.0.0.1:7890
 poe_name = canxin
 poe_passwd = passwd
@@ -96,6 +98,10 @@ poe_passwd = passwd
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(7).PNG) | |
 
 ## 更新
+2023/4/27:  
+    1.修复cookie致命bug  
+    2./pl登录可能暂时不好用了，因为poe在检测机器人登录，请自行填写ck  
+    3.新增neevaAi搜索功能  
 2023/4/26:  
-    1.单例模式重构，只创建一个context，稍微减轻性能消耗
-    2.暂时修复poe官网suggest消失造成死循环的bug
+    1.单例模式重构，只创建一个context，稍微减轻性能消耗  
+    2.暂时修复poe官网suggest消失造成死循环的bug  

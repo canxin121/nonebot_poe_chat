@@ -1,3 +1,4 @@
+import datetime
 import json,asyncio
 from nonebot.plugin import on_command, on
 from nonebot.params import ArgStr, CommandArg
@@ -69,7 +70,9 @@ async def __poe_create___(bot: Bot,matcher: Matcher,event: Event,state: T_State,
     #获取创建所需信息
     userid = str(state['user_id'])
     nickname = str(infos[0])
-    truename = str(generate_uuid(str(userid + infos[0])))
+    current_time = datetime.datetime.now()
+    current_time_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
+    truename = str(generate_uuid(str(userid + current_time_str +infos[0])))
     prompt = str(infos[2])
     bot_index = str(infos[1])
     if prompt.startswith("."):

@@ -2,7 +2,7 @@ from typing import Union
 import re, uuid, asyncio,string,random
 import aiohttp
 import qrcode
-from nonebot import require
+from nonebot import logger, require
 require("nonebot_plugin_guild_patch")
 from nonebot_plugin_guild_patch import GuildMessageEvent
 from nonebot.adapters.onebot.v11 import Message,MessageEvent,MessageSegment
@@ -74,3 +74,23 @@ async def mdlink_2_str(md_text):
 
     output_str = '\n\n'.join(result)
     return output_str
+
+# async def install_browser():
+#     import os
+#     import sys
+
+#     from playwright.__main__ import main
+
+#     if host := config.htmlrender_download_host:
+#         logger.info("使用配置源进行下载")
+#         os.environ["PLAYWRIGHT_DOWNLOAD_HOST"] = host
+#     else:
+#         logger.info("使用镜像源进行下载")
+#         os.environ[
+#             "PLAYWRIGHT_DOWNLOAD_HOST"
+#         ] = "https://npmmirror.com/mirrors/playwright/"
+#     success = False
+#     logger.info("正在安装 chromium")
+#     sys.argv = ["", "install", "chromium"]
+#     if not success:
+#         logger.error("浏览器更新失败, 请检查网络连通性")

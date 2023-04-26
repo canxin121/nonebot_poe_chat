@@ -18,14 +18,12 @@ def check_cookie(self):
                 f.write('{}')
                 print('poe_cookie.json 创建成功')
         poe_ck = nonebot.get_driver().config.poe_cookie
-        cookie_parms = [
-        {
+        cookie_parms = {
             "domain": "poe.com",
             "name": "p-b",
             "path": "/",
             "value": f"{poe_ck}"
         }
-        ] 
         is_env_ck = True
     except:
         is_env_ck = False
