@@ -1,6 +1,7 @@
 import json
 import os
 import nonebot
+from nonebot import logger
 from pathlib import Path    
 def check_cookie(self):
     if os.path.exists(self.cookie_path):
@@ -16,7 +17,7 @@ def check_cookie(self):
         if not os.path.exists(self.cookie_path):
             with open(self.cookie_path, 'w') as f:
                 f.write('{}')
-                print('poe_cookie.json 创建成功')
+                logger.info('poe_cookie.json 创建成功')
         poe_ck = nonebot.get_driver().config.poe_cookie
         cookie_parms = {
             "domain": "poe.com",
@@ -93,7 +94,7 @@ class Config:
                 os.makedirs(dir_path)
             with open(self.user_path, 'w') as f:
                 f.write('{}')
-                print('user_dict.json 创建成功')
+                logger.info('user_dict.json 创建成功')
             
         try:
             with open(self.user_path, 'r') as f:
@@ -108,8 +109,8 @@ class Config:
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
             with open(self.prompt_path, 'w') as f:
-                f.write('{"\u9ed8\u8ba4": "\u4e00\u4e2aai\u8bed\u8a00\u6a21\u578b"}')
-                print('prompt_dict.json 创建成功')
+                f.write('{"\u9ed8\u8ba4": "\u4e00\u4e2a\u667a\u80fd\u52a9\u7406", "\u732b\u5a18": "\u73b0\u5728\u4f60\u5c06\u6a21\u4eff\u4e00\u53ea\u732b\u5a18\uff0c\u4e0e\u6211\u5bf9\u8bdd\u6bcf\u4e00\u53e5\u8bdd\u540e\u9762\u90fd\u8981\u52a0\u4e0a\u201c\u55b5\u201d\uff0c\u5982\u679c\u4f60\u80fd\u660e\u767d\u6211\u7684\u610f\u601d\uff0c\u8bf7\u56de\u590d\u201c\u55b5~\u4f60\u597d\u4e3b\u4eba\u201d"}')
+                logger.info('prompt_dict.json 创建成功')
             
         
         with open(self.prompt_path, 'r') as f:

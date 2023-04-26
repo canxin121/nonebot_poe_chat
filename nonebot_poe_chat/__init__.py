@@ -6,6 +6,7 @@ from nonebot.typing import T_State
 from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent,MessageSegment
 from nonebot.internal.rule import Rule
+from nonebot import logger
 from .config import Config
 from .poe_func import reply_out,generate_uuid,generate_random_string,is_email,delete_messages,mdlink_2_str
 from .poe_api import poe_chat,poe_create,poe_clear,submit_email, submit_code
@@ -26,7 +27,8 @@ superusers = config.superusers
 is_cookie_exists = config.is_cookie_exists
 is_pic_able = config.pic_able
 is_url_able = config.url_able
-######################################################        
+######################################################
+creat_lock = asyncio.Lock()        
 create_msgs = {}
 create_pages = {}
 poe_create_ = on_command(
@@ -63,7 +65,7 @@ async def __poe_create___(bot: Bot,matcher: Matcher,event: Event,state: T_State,
         await asyncio.sleep(1)
         await delete_messages(bot,str(event.user_id),create_msgs)
         await poe_create_.finish()
-    infos = infos.split(" ")
+    infos = infos.split(" ",2)
     if not (len(infos) == 3 and infos[1] in ['1', '2']):
         create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "输入信息有误，请检查后重新输入")))
         await poe_create_.reject()
@@ -94,36 +96,41 @@ async def __poe_create___(bot: Bot,matcher: Matcher,event: Event,state: T_State,
         create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "已经有同名的bot了，换一个名字重新输入吧")))
         await poe_create_.reject()
     else:
-        create_pages[userid] = await pwfw.new_page()
-        is_created = await poe_create(page=create_pages[userid],botname=truename,base_bot_index=int(bot_index),prompt=prompt)
-        try:
-            await create_pages[userid].close()
-        except:
-            pass
-        del create_pages[userid]
-        if is_created:
-            # # 将更新后的字典写回到JSON文件中
-            user_dict[userid]['all'][nickname] = truename
-            
-            if user_dict[userid]['now']:
-                user_dict[userid]['now'] = {}
-            user_dict[userid]['now'][nickname] = truename
-            
-            with open(user_path, 'w') as f:
-                json.dump(user_dict, f)
-
-            await matcher.send(reply_out(event, "创建成功并切换到新建bot"))
-            await asyncio.sleep(1)
-            await delete_messages(bot,userid,create_msgs)
-            await poe_switch.finish()
-        else: 
-            await matcher.send(reply_out(event, "出错了，多次出错请联系机器人管理员"))
-            await asyncio.sleep(1)
-            await delete_messages(bot,userid,create_msgs)
-            await poe_switch.finish()
+        if creat_lock.locked():
+            waitmsg = await matcher.send(reply_out(event, "有人正在创建中，稍后自动为你创建"))
+        async with creat_lock:
+            create_pages[userid] = await pwfw.new_page()
+            is_created = await poe_create(page=create_pages[userid],botname=truename,base_bot_index=int(bot_index),prompt=prompt)
+            try:
+                await create_pages[userid].close()
+            except:
+                pass
+            del create_pages[userid]
+            if is_created:
+                # # 将更新后的字典写回到JSON文件中
+                user_dict[userid]['all'][nickname] = truename
+                
+                if user_dict[userid]['now']:
+                    user_dict[userid]['now'] = {}
+                user_dict[userid]['now'][nickname] = truename
+                
+                with open(user_path, 'w') as f:
+                    json.dump(user_dict, f)
+                try:
+                    await bot.delete_msg(message_id=waitmsg['message_id'])
+                except:
+                    pass
+                await matcher.send(reply_out(event, "创建成功并切换到新建bot"))
+                await asyncio.sleep(1)
+                await delete_messages(bot,userid,create_msgs)
+                await poe_switch.finish()
+            else: 
+                await matcher.send(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+                await asyncio.sleep(1)
+                await delete_messages(bot,userid,create_msgs)
+                await poe_switch.finish()
 
 ######################################################    
-
 
 chat_lock = asyncio.Semaphore(3)
 #像这样的全局变量都是临时的
@@ -211,7 +218,7 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
                     last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
                 else:
                     last_messageid[userid] = await matcher.send(reply_out(event, pic))
-                matcher.finish()
+                await matcher.finish()
             else:
                 try:
                     await chat_pages[userid].close()
@@ -219,7 +226,7 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
                     pass
                 del chat_pages[userid]
                 last_messageid[userid] = await matcher.send(reply_out(event, msg))
-                matcher.finish()
+                await matcher.finish()
         else:
             try:
                 await chat_pages[userid].close()
@@ -298,7 +305,7 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
                     last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
                 else:
                     last_messageid[userid] = await matcher.send(reply_out(event, pic))
-                matcher.finish()
+                await matcher.finish()
             else:
                 try:
                     await chat_pages[userid].close()
@@ -306,7 +313,7 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
                     pass
                 del chat_pages[userid]
                 last_messageid[userid] = await matcher.send(reply_out(event, msg))
-                matcher.finish()
+                await matcher.finish()
         else:
             try:
                 await chat_pages[userid].close()
@@ -315,6 +322,7 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
             del chat_pages[userid]
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
 ######################################################
+neeva_lock = asyncio.Lock()
 poe_neeva_ = on_command(
     "poeneeva",
     aliases={
@@ -325,19 +333,16 @@ poe_neeva_ = on_command(
     block=False)
 @poe_neeva_.handle()
 async def __poe_neeva__(matcher:Matcher,event: Event, args: Message = CommandArg()):
-    global chat_lock,last_messageid,chat_pages
+    global last_messageid
     text = str(args[0])
     userid = str(event.user_id)
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
-    if userid in chat_pages:
-        await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后再发送"))
-    if chat_lock.locked():
-        await matcher.send(reply_out(event, "请稍等,你前面已有3个用户,你的回答稍后就来"))
-    async with chat_lock:
-        chat_pages[userid] = await pwfw.new_page()
-        result = await poe_chat("NeevaAI", text, chat_pages[userid],nosuggest=True)
-
+    if neeva_lock.locked():
+        await matcher.send(reply_out(event, "请稍等,正有一个人在使用ai搜索"))
+    async with neeva_lock:
+        neeva_page= await pwfw.new_page()
+        result = await poe_chat("NeevaAI", text, neeva_page,nosuggest=True)
         
         if isinstance(result, tuple):
             last_answer,_ = result
@@ -351,20 +356,228 @@ async def __poe_neeva__(matcher:Matcher,event: Event, args: Message = CommandArg
             msg = f"{last_answer}\n"
             msg = await mdlink_2_str(msg)
             try:
-                await chat_pages[userid].close()
+                await neeva_page.close()
             except:
                 pass
-            del chat_pages[userid]
             last_messageid[userid] = await matcher.send(reply_out(event, msg))
-            matcher.finish()
+            await matcher.finish()
         else:
             try:
-                await chat_pages[userid].close()
+                await neeva_page.close()
             except:
                 pass
-            del chat_pages[userid]
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
 ######################################################   
+gpt_share_lock = asyncio.Lock()
+gpt_user_number = 0
+#先留着，后面用再说
+gpt_share_lastmsgid = str
+
+gpt_share_suggests = []
+poe_share_gpt_ = on_command(
+    "poesharegpt",
+    aliases={
+        "psharegpt",
+        "psg"
+        },
+    priority=1,
+    block=False)
+@poe_share_gpt_.handle()
+async def __poe_share_gpt__(bot:Bot,matcher:Matcher,event: Event, args: Message = CommandArg()):
+    global gpt_share_lastmsgid,gpt_share_suggests,gpt_user_number
+    text = str(args[0])
+    userid = str(event.user_id)
+    if not is_cookie_exists:
+        await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    if gpt_share_lock.locked() and gpt_user_number <= 4:
+        gpt_waitmsg = await matcher.send(reply_out(event, "还没回答完上一个问题，稍等马上回复你"))
+    if gpt_user_number>4:
+        await matcher.finish(reply_out(event, "我还有5个问题没回答呢，你等会再用吧"))
+    gpt_user_number += 1
+    async with gpt_share_lock:
+        gpt_share_page = await pwfw.new_page()
+        result = await poe_chat("ChatGPT", text, gpt_share_page)
+        if isinstance(result, tuple):
+            last_answer, gpt_share_suggests = result
+            is_successful = True
+        elif isinstance(result, bool):
+            is_successful = result
+        else:
+            try:
+                await gpt_share_page.close()
+            except:
+                pass
+            raise ValueError("Unexpected return type from get_message_async")
+        if is_successful:
+            suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(gpt_share_suggests)])
+            msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            if is_pic_able:
+                pic,url = await txt2img.draw(title=" ",text=msg)
+                try:
+                    await gpt_share_page.close()
+                except:
+                    pass
+                if is_url_able:
+                    gpt_share_lastmsgid = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                else:
+                    gpt_share_lastmsgid = await matcher.send(reply_out(event, pic))
+                gpt_user_number -= 1
+                try:
+                    await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
+                except:
+                    pass
+                await matcher.finish()
+            else:
+                try:
+                    await gpt_share_page.close()
+                except:
+                    pass
+                gpt_share_lastmsgid = await matcher.send(reply_out(event, msg))
+                gpt_user_number -= 1
+                await matcher.finish()
+        else:
+            try:
+                await gpt_share_page.close()
+            except:
+                pass
+            gpt_user_number -= 1
+            try:
+                await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
+            except:
+                pass
+            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+######################################################   
+poe_gpt_clear_ = on_command(
+    "poegptdump",
+    aliases={
+        "poegpt清除",
+        "pgd"
+        },
+    priority=4,
+    block=False)
+@poe_gpt_clear_.handle()
+async def __poe_gpt_clear___(event: Event,matcher:Matcher):
+    if not is_cookie_exists:
+        await matcher.finish(reply_out(event, "机器人管理员还没填写可用的poe_cookie或登陆"))
+    if gpt_share_lock.locked():
+        await matcher.finish(reply_out(event, "我还有一个问题没回答完呢"))
+    gpt_clear_page = await pwfw.new_page()
+    is_cleared = await poe_clear(page=gpt_clear_page,botname="ChatGPT")
+    try:
+        await gpt_clear_page.close()
+    except:
+        pass
+    if is_cleared:
+        msg = f"成功清除了ChatGPT的历史消息"
+    else:
+        msg = "出错了，多次错误请联系机器人主人"
+    await matcher.finish(reply_out(event, msg))  
+######################################################   
+claude_share_lock = asyncio.Lock()
+claude_user_number = 0
+#先留着，后面用再说
+claude_share_lastmsgid = str
+
+claude_share_suggests = []
+poe_share_claude_ = on_command(
+    "poeshareclaude",
+    aliases={
+        "pshareclaude",
+        "psc"
+        },
+    priority=1,
+    block=False)
+@poe_share_claude_.handle()
+async def __poe_share_claude__(bot:Bot,matcher:Matcher,event: Event, args: Message = CommandArg()):
+    global claude_share_lastmsgid,claude_share_suggests,claude_user_number
+    text = str(args[0])
+    userid = str(event.user_id)
+    if not is_cookie_exists:
+        await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    if claude_share_lock.locked() and claude_user_number <= 4:
+        claude_waitmsg = await matcher.send(reply_out(event, "还没回答完上一个问题，稍等马上回复你"))
+    if claude_user_number>4:
+        await matcher.finish(reply_out(event, "我还有5个问题没回答呢，你等会再用吧"))
+    claude_user_number += 1
+    async with claude_share_lock:
+        claude_share_page = await pwfw.new_page()
+        result = await poe_chat("Claude-instant", text, claude_share_page)
+        if isinstance(result, tuple):
+            last_answer, claude_share_suggests = result
+            is_successful = True
+        elif isinstance(result, bool):
+            is_successful = result
+        else:
+            try:
+                await claude_share_page.close()
+            except:
+                pass
+            raise ValueError("Unexpected return type from get_message_async")
+        if is_successful:
+            suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(claude_share_suggests)])
+            msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            if is_pic_able:
+                pic,url = await txt2img.draw(title=" ",text=msg)
+                try:
+                    await claude_share_page.close()
+                except:
+                    pass
+                if is_url_able:
+                    claude_share_lastmsgid = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                else:
+                    claude_share_lastmsgid = await matcher.send(reply_out(event, pic))
+                claude_user_number -= 1
+                try:
+                    await bot.delete_msg(message_id=claude_waitmsg['message_id'])
+                except:
+                    pass
+                await matcher.finish()
+            else:
+                try:
+                    await claude_share_page.close()
+                except:
+                    pass
+                claude_share_lastmsgid = await matcher.send(reply_out(event, msg))
+                claude_user_number -= 1
+                await matcher.finish()
+        else:
+            try:
+                await claude_share_page.close()
+            except:
+                pass
+            claude_user_number -= 1
+            try:
+                await bot.delete_msg(message_id=claude_waitmsg['message_id'])
+            except:
+                pass
+            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+######################################################   
+poe_claude_clear_ = on_command(
+    "poeclaudedump",
+    aliases={
+        "poeclaude清除",
+        "pcd"
+        },
+    priority=4,
+    block=False)
+@poe_claude_clear_.handle()
+async def __poe_claude_clear___(event: Event,matcher:Matcher):
+    if not is_cookie_exists:
+        await matcher.finish(reply_out(event, "机器人管理员还没填写可用的poe_cookie或登陆"))
+    if claude_share_lock.locked():
+        await matcher.finish(reply_out(event, "我还有一个问题没回答完呢"))
+    claude_clear_page = await pwfw.new_page()
+    is_cleared = await poe_clear(page=claude_clear_page,botname="Claude-instant")
+    try:
+        await claude_clear_page.close()
+    except:
+        pass
+    if is_cleared:
+        msg = f"成功清除了Claude-instant的历史消息"
+    else:
+        msg = "出错了，多次错误请联系机器人主人"
+    await matcher.finish(reply_out(event, msg))
+######################################################
 clear_pages = {}
 poe_clear_ = on_command(
     "poedump",
@@ -399,7 +612,7 @@ async def __poe_clear___(event: Event,matcher:Matcher):
         msg = "出错了，多次错误请联系机器人主人"
     await matcher.finish(reply_out(event, msg))
     
-######################################################
+######################################################  
 switch_msgs = {}
 poe_switch = on_command(
     "poeswitch",
@@ -650,12 +863,20 @@ async def __poe_help__(bot: Bot,event: Event):
     "--可以直接回复机器人给你的回答来继续对话，无需命令\n"
     "--可以使用数字索引来使用建议回复\n\n"
     "--以下命令前面全部要加 / \n"
+    "************************\n"
+    "--以下命令均支持用户隔离\n"
     "~对话:poetalk / ptalk / pt\n"
     "~清空历史对话:poedump / pdump / pd\n"
-    "~NeevaAI搜索:poeneeva / pneeva / pn\n"
     "~创建机器人:poecreate / 创建bot / pc\n"
     "~删除机器人:poeremove / 删除bot / pr\n"
     "~切换机器人:poeswitch / 切换bot / ps\n\n"
+    "--以下命令均是多用户共享的\n"
+    "搜索引擎返回的是链接及标题\n"
+    "~NeevaAI搜索引擎:poeneeva / pneeva / pn\n"
+    "~共享的gpt对话:poesharegpt / psharegpt / psg\n"
+    "~清空共享的gpt的对话历史:poegptdump / poegpt清除 / pgd\n"
+    "~共享的claude对话:poeshareclaude / pshareclaude / psc\n"
+    "~清空共享的claude的对话历史:poeclaudedump / poeclaude清除 / pcd\n"
     "************************\n"
     "--以下功能仅限poe管理员使用\n"
     "~登录:poelogin / plogin / pl\n"

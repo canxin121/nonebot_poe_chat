@@ -71,8 +71,8 @@ async def get_message_async(page,botname, sleep,nosuggest=False):
                 if chat_list_text[-1]:
                     match_suggest = re.search(r'<section class="ChatMessageSuggestedReplies_suggestedRepliesContainer__JgW12">*(.*?)</section>', response, re.DOTALL)
                     string_list = re.findall(r'>\s*([^<>\n]+)\s*<', match_suggest.group(1))
-                    if len(string_list) == 4:
-                        return chat_list_text, string_list
+                    if len(string_list) == 4 or len(string_list) == 5:
+                        return chat_list_text, string_list[0:4]
                     if len(string_list) == 1:
                         suggest_lost += 1
                     if suggest_lost > 2:
