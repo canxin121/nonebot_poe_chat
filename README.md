@@ -73,6 +73,8 @@ pip install nonebot-poe-chat
 ```
 playwright install chromium
 ```
+## step.3  
+打开poe官网（poe.com），注册账号登录并填写profile（点击create bot可能会弹出让你填写），提取cookie  
 ## 配置（在.env中修改）  
 
 
