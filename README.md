@@ -22,7 +22,7 @@
     <img src="https://img.shields.io/github/last-commit/canxin121/nonebot_poe_chat" alt="github">
     </a>
 </p>
-<div align="left">
+<div align="left">  
 ## 功能特性
 - 可以使用gpt3.5和claude两种模型，支持自定义预设和本地预设  
 - 可以使用neeva ai搜索引擎  
