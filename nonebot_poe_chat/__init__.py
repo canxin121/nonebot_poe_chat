@@ -6,7 +6,7 @@ from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent,MessageSegment
 from nonebot.internal.rule import Rule
 from .config import Config
-from .poe_func import reply_out,generate_uuid,generate_random_string,is_email,delete_messages
+from .poe_func import reply_out,generate_uuid,generate_random_string,is_email,delete_messages,mdlink_2_str
 from .poe_api import poe_chat,poe_create,poe_clear,submit_email, submit_code
 from .txt2img import Txt2Img
 from .pwframework import PlaywrightFramework
@@ -177,16 +177,16 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
     async with chat_lock:
         chat_pages[userid] = await pwfw.new_page()
         result = await poe_chat(botname, text, chat_pages[userid])
-        try:
-            await chat_pages[userid].close()
-        except:
-            pass
-        del chat_pages[userid]
         if isinstance(result, tuple):
             last_answer, chat_suggest[userid] = result
             is_successful = True
         elif isinstance(result, str):
             if "banned" == result:
+                try:
+                    await chat_pages[userid].close()
+                except:
+                    pass
+                del chat_pages[userid]
                 await matcher.finish(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
         elif isinstance(result, bool):
             is_successful = result
@@ -199,15 +199,30 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
             msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
             if is_pic_able:
                 pic,url = await txt2img.draw(title=" ",text=msg)
+                try:
+                    await chat_pages[userid].close()
+                except:
+                    pass
+                del chat_pages[userid]
                 if is_url_able:
                     last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
                 else:
                     last_messageid[userid] = await matcher.send(reply_out(event, pic))
                 matcher.finish()
             else:
+                try:
+                    await chat_pages[userid].close()
+                except:
+                    pass
+                del chat_pages[userid]
                 last_messageid[userid] = await matcher.send(reply_out(event, msg))
                 matcher.finish()
         else:
+            try:
+                await chat_pages[userid].close()
+            except:
+                pass
+            del chat_pages[userid]
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
 
 ######################################################
@@ -246,35 +261,105 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
     async with chat_lock:
         chat_pages[userid] = await pwfw.new_page()
         result = await poe_chat(botname, text, chat_pages[userid])
-        try:
-            await chat_pages[userid].close()
-        except:
-            pass
-        del chat_pages[userid]
         if isinstance(result, tuple):
             last_answer, chat_suggest[userid] = result
             is_successful = True
         elif isinstance(result, str):
             if "banned" == result:
+                try:
+                    await chat_pages[userid].close()
+                except:
+                    pass
+                del chat_pages[userid]
                 await matcher.finish(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
         elif isinstance(result, bool):
             is_successful = result
         else:
+            try:
+                await chat_pages[userid].close()
+            except:
+                pass
+            del chat_pages[userid]
             raise ValueError("Unexpected return type from get_message_async")
         if is_successful:
             suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(chat_suggest[userid])])
             msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
             if is_pic_able:
                 pic,url = await txt2img.draw(title=" ",text=msg)
+                try:
+                    await chat_pages[userid].close()
+                except:
+                    pass
+                del chat_pages[userid]
                 if is_url_able:
                     last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
                 else:
                     last_messageid[userid] = await matcher.send(reply_out(event, pic))
                 matcher.finish()
             else:
+                try:
+                    await chat_pages[userid].close()
+                except:
+                    pass
+                del chat_pages[userid]
                 last_messageid[userid] = await matcher.send(reply_out(event, msg))
                 matcher.finish()
         else:
+            try:
+                await chat_pages[userid].close()
+            except:
+                pass
+            del chat_pages[userid]
+            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+######################################################
+poe_neeva_ = on_command(
+    "poeneeva",
+    aliases={
+        "pneeva",
+        "pn"
+        },
+    priority=1,
+    block=False)
+@poe_neeva_.handle()
+async def __poe_neeva__(matcher:Matcher,event: Event, args: Message = CommandArg()):
+    global chat_lock,last_messageid,chat_pages
+    text = str(args[0])
+    userid = str(event.user_id)
+    if not is_cookie_exists:
+        await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    if userid in chat_pages:
+        await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后再发送"))
+    if chat_lock.locked():
+        await matcher.send(reply_out(event, "请稍等,你前面已有3个用户,你的回答稍后就来"))
+    async with chat_lock:
+        chat_pages[userid] = await pwfw.new_page()
+        result = await poe_chat("NeevaAI", text, chat_pages[userid],nosuggest=True)
+
+        
+        if isinstance(result, tuple):
+            last_answer,_ = result
+            is_successful = True
+        elif isinstance(result, bool):
+            is_successful = result
+        else:
+            raise ValueError("Unexpected return type from get_message_async")
+
+        if is_successful:
+            msg = f"{last_answer}\n"
+            msg = await mdlink_2_str(msg)
+            try:
+                await chat_pages[userid].close()
+            except:
+                pass
+            del chat_pages[userid]
+            last_messageid[userid] = await matcher.send(reply_out(event, msg))
+            matcher.finish()
+        else:
+            try:
+                await chat_pages[userid].close()
+            except:
+                pass
+            del chat_pages[userid]
             await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
 ######################################################   
 clear_pages = {}
@@ -564,6 +649,7 @@ async def __poe_help__(bot: Bot,event: Event):
     "--以下命令前面全部要加 / \n"
     "~对话:poetalk / ptalk / pt\n"
     "~清空历史对话:poedump / pdump / pd\n"
+    "~NeevaAI搜索:poeneeva / pneeva / pn\n"
     "~创建机器人:poecreate / 创建bot / pc\n"
     "~删除机器人:poeremove / 删除bot / pr\n"
     "~切换机器人:poeswitch / 切换bot / ps\n\n"

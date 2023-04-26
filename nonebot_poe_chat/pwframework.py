@@ -34,9 +34,9 @@ class PlaywrightFramework(metaclass=Singleton):
             if passwd is not None:
                 proxy_config["password"] = passwd
             if proxy_config:
-                self.browser = await self.playwright.chromium.launch(proxy=proxy_config,headless=False)
+                self.browser = await self.playwright.chromium.launch(proxy=proxy_config)
             else:
-                self.browser = await self.playwright.chromium.launch(headless=False)
+                self.browser = await self.playwright.chromium.launch()
             self.context = await self.browser.new_context()
             print("创建context")
             if is_cookie_exsits:

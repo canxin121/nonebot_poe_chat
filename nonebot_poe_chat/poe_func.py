@@ -62,3 +62,15 @@ async def delete_messages(bot, user_id, dict_list):
         for eachmsg in dict_list[user_id]:
             await bot.delete_msg(message_id=eachmsg['message_id'])
         del dict_list[user_id]
+async def mdlink_2_str(md_text):
+    result = []
+    pattern = r'\[([^\]]+)\]\(([^)]+)\)(\s*-\s*([^[]+))?' # 匹配超链接及其描述
+    matches = re.findall(pattern, md_text)
+    for i, match in enumerate(matches):
+        # 提取标题
+        title = match[0].strip() if not match[3] else match[3].strip()
+        # 组合字符串
+        result.append(f"{i+1}. {title} - {match[1].strip()}")
+
+    output_str = '\n\n'.join(result)
+    return output_str
