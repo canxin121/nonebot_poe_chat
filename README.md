@@ -71,7 +71,7 @@ pip install nonebot-poe-chat
  
 ## step.2  
 ```
-playwright install chromuim
+playwright install chromium
 ```
 ## 配置（在.env中修改）  
 
