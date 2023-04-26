@@ -24,6 +24,7 @@
 </p>
 <div align="left">
  
+[Spring-data-jpa 查询  复杂查询陆续完善中](http://www.cnblogs.com/sxdcgaq8080/p/7894828.html)
 ## 功能特性
 - 可以使用gpt3.5和claude两种模型，支持自定义预设和本地预设  
 - 可以使用neeva ai搜索引擎  
