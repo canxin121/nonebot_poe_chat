@@ -65,9 +65,9 @@
 | 指令 | 需要@ | 范围 | 说明 | 权限 |
 |:----:|:----:|:----:|:----:|:----:|
 | poeneeva / pneeva / pn | 否 | 私聊、群聊 | 使用 NeevaAI 搜索引擎 | 普通用户 |
-| poesharegpt / psharegpt / psg | 否 | 群聊、私聊 | 共享 GPT 对话 | 普通用户 |
+| poesharegpt / psharegpt / psg + 要询问的内容| 否 | 群聊、私聊 | 共享 GPT 对话 | 普通用户 |
 | poegptdump / poegpt清除 / pgd | 否 | 群聊、私聊 | 清空共享的 GPT 对话历史 | 普通用户 |
-| poeshareclaude / pshareclaude / psc | 否 | 群聊、私聊 | 共享 Claude 对话 | 普通用户 |
+| poeshareclaude / pshareclaude / psc + 要询问的内容| 否 | 群聊、私聊 | 共享 Claude 对话 | 普通用户 |
 | poeclaudedump / poeclaude清除 / pcd | 否 | 群聊、私聊 | 清空共享的 Claude 对话历史 | 普通用户 |
     
 ### 管理员命令
