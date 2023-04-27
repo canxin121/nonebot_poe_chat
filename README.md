@@ -48,16 +48,37 @@
 - 插件储存数据放置在./data/poe_chat中  
 - 支持填写代理地址http,https,socks，及其username,password
 
- ##指令大全
+## 指令大全
+    
+### 用户隔离的命令，也就是每个人互不干扰
     
 | 指令 | 需要@ | 范围 | 说明 | 权限 |
 |:----:|:----:|:----:|:----:|:----:|
-| poetalk / ptalk / pt | 否 | 私聊、群聊 | 进行对话 | 普通用户 |
+| poetalk / ptalk / pt + 询问的内容 | 否 | 私聊、群聊 | 进行对话 | 普通用户 |
 | poedump / pdump / pd | 否 | 私聊、群聊 | 清空历史对话 | 普通用户 |
 | poecreate / 创建bot / pc | 否 | 群聊、私聊 | 创建机器人 | 普通用户 |
 | poeremove / 删除bot / pr | 否 | 群聊、私聊 | 删除机器人 | 普通用户 |
 | poeswitch / 切换bot / ps | 否 | 群聊、私聊 | 切换机器人 | 普通用户 |
-
+    
+### 用户共享的命令，所有人都是用的同一个机器人
+    
+| 指令 | 需要@ | 范围 | 说明 | 权限 |
+|:----:|:----:|:----:|:----:|:----:|
+| poeneeva / pneeva / pn | 否 | 私聊、群聊 | 使用 NeevaAI 搜索引擎 | 普通用户 |
+| poesharegpt / psharegpt / psg | 否 | 群聊、私聊 | 共享 GPT 对话 | 普通用户 |
+| poegptdump / poegpt清除 / pgd | 否 | 群聊、私聊 | 清空共享的 GPT 对话历史 | 普通用户 |
+| poeshareclaude / pshareclaude / psc | 否 | 群聊、私聊 | 共享 Claude 对话 | 普通用户 |
+| poeclaudedump / poeclaude清除 / pcd | 否 | 群聊、私聊 | 清空共享的 Claude 对话历史 | 普通用户 |
+    
+###管理员命令
+    
+| 指令 | 需要@ | 范围 | 说明 | 权限 |
+|:----:|:----:|:----:|:----:|:----:|
+| poelogin / plogin / pl | 否 | 私聊 | 登录账号 | poe管理员 |
+| poeaddprompt / 添加预设 / pap | 否 | 群聊、私聊 | 添加预设 | poe管理员 |
+| poeremoveprompt / 删除预设 / prp | 否 | 群聊、私聊 | 删除预设 | poe管理员 |
+| poechangeprompt / 切换自动预设 / pcp | 否 | 群聊 | 切换自动创建的默认预设 | poe管理员 |
+    
 ## 示例
 
 | Image 1 | Image 2 |
