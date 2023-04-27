@@ -24,17 +24,6 @@
 </p>
 <div align="left">
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>My HTML Page</title>
-</head>
-<body>
-    <iframe src="https://canxin121.github.io/docs/docs/nonebot-poe-chat.html" width="100%" height="600"></iframe>
-</body>
-</html>
-
-    
 > 详细教程跳转👇  
 > [残心小站-文档库](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
 
