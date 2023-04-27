@@ -20,13 +20,17 @@ txt2img = Txt2Img()
 config = Config()
 user_dict = config.user_dict
 prompts_dict = config.prompts_dict
+superuser_dict = config.superuser_dict
 user_path = config.user_path
 prompt_path = config.prompt_path
 cookie_path = config.cookie_path
+superuser_path = config.superuser_dict_path
+suggest_able = config.suggest_able
 superusers = config.superusers
 is_cookie_exists = config.is_cookie_exists
 is_pic_able = config.pic_able
 is_url_able = config.url_able
+is_qr_able = config.qr_able
 ######################################################
 creat_lock = asyncio.Lock()        
 create_msgs = {}
@@ -155,9 +159,9 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
     if userid not in user_dict:
         random = generate_random_string()
         truename = str(generate_uuid(str(userid + random)))
-        
+        prompt = prompts_dict[superuser_dict["auto_default"]]
         create_pages[userid] = await pwfw.new_page()
-        is_created = await poe_create(create_pages[userid],truename,1,"一个智能助理")
+        is_created = await poe_create(create_pages[userid],truename,1,prompt)
         try:
             await create_pages[userid].close()
         except:
@@ -206,19 +210,32 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
 
         if is_successful:
             suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(chat_suggest[userid])])
-            msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            if suggest_able:
+                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            else:
+                msg = f"{last_answer}\n"
             if is_pic_able:
-                pic,url = await txt2img.draw(title=" ",text=msg)
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                if is_url_able:
-                    last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                if is_qr_able:
+                    pic,url = await txt2img.draw(title=" ",text=msg)
+                    try:
+                        await chat_pages[userid].close()
+                    except:
+                        pass
+                    del chat_pages[userid]
+                    if is_url_able:
+                        last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                    else:
+                        last_messageid[userid] = await matcher.send(reply_out(event, pic))
+                    await matcher.finish()
                 else:
+                    try:
+                        await chat_pages[userid].close()
+                    except:
+                        pass
+                    del chat_pages[userid]
+                    pic,_ = await txt2img.draw(title=" ",text=msg)
                     last_messageid[userid] = await matcher.send(reply_out(event, pic))
-                await matcher.finish()
+                    await matcher.finish()
             else:
                 try:
                     await chat_pages[userid].close()
@@ -293,19 +310,32 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
             raise ValueError("Unexpected return type from get_message_async")
         if is_successful:
             suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(chat_suggest[userid])])
-            msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            if suggest_able:
+                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            else:
+                msg = f"{last_answer}\n"
             if is_pic_able:
-                pic,url = await txt2img.draw(title=" ",text=msg)
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                if is_url_able:
-                    last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                if is_qr_able:
+                    pic,url = await txt2img.draw(title=" ",text=msg)
+                    try:
+                        await chat_pages[userid].close()
+                    except:
+                        pass
+                    del chat_pages[userid]
+                    if is_url_able:
+                        last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                    else:
+                        last_messageid[userid] = await matcher.send(reply_out(event, pic))
+                    await matcher.finish()
                 else:
+                    try:
+                        await chat_pages[userid].close()
+                    except:
+                        pass
+                    del chat_pages[userid]
+                    pic,_ = await txt2img.draw(title=" ",text=msg)
                     last_messageid[userid] = await matcher.send(reply_out(event, pic))
-                await matcher.finish()
+                    await matcher.finish()
             else:
                 try:
                     await chat_pages[userid].close()
@@ -410,29 +440,50 @@ async def __poe_share_gpt__(bot:Bot,matcher:Matcher,event: Event, args: Message 
             raise ValueError("Unexpected return type from get_message_async")
         if is_successful:
             suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(gpt_share_suggests)])
-            msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            if suggest_able:
+                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            else:
+                msg = f"{last_answer}\n"
             if is_pic_able:
-                pic,url = await txt2img.draw(title=" ",text=msg)
-                try:
-                    await gpt_share_page.close()
-                except:
-                    pass
-                if is_url_able:
-                    gpt_share_lastmsgid = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                if is_qr_able:
+                    pic,url = await txt2img.draw(title=" ",text=msg)
+                    try:
+                        await gpt_share_page.close()
+                    except:
+                        pass
+                    if is_url_able:
+                        gpt_share_lastmsgid = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                    else:
+                        gpt_share_lastmsgid = await matcher.send(reply_out(event, pic))
+                    try:
+                        await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
+                    except:
+                        pass
+                    gpt_user_number -= 1
+                    await matcher.finish()
                 else:
+                    try:
+                        await gpt_share_page.close()
+                    except:
+                        pass
+                    pic,_ = await txt2img.draw(title=" ",text=msg)
                     gpt_share_lastmsgid = await matcher.send(reply_out(event, pic))
-                gpt_user_number -= 1
-                try:
-                    await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
-                except:
-                    pass
-                await matcher.finish()
+                    try:
+                        await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
+                    except:
+                        pass
+                    gpt_user_number -= 1
+                    await matcher.finish()
             else:
                 try:
                     await gpt_share_page.close()
                 except:
                     pass
                 gpt_share_lastmsgid = await matcher.send(reply_out(event, msg))
+                try:
+                    await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
+                except:
+                    pass
                 gpt_user_number -= 1
                 await matcher.finish()
         else:
@@ -515,29 +566,50 @@ async def __poe_share_claude__(bot:Bot,matcher:Matcher,event: Event, args: Messa
             raise ValueError("Unexpected return type from get_message_async")
         if is_successful:
             suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(claude_share_suggests)])
-            msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            if suggest_able:
+                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            else:
+                msg = f"{last_answer}\n"
             if is_pic_able:
-                pic,url = await txt2img.draw(title=" ",text=msg)
-                try:
-                    await claude_share_page.close()
-                except:
-                    pass
-                if is_url_able:
-                    claude_share_lastmsgid = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                if is_qr_able:
+                    pic,url = await txt2img.draw(title=" ",text=msg)
+                    try:
+                        await claude_share_page.close()
+                    except:
+                        pass
+                    if is_url_able:
+                        claude_share_lastmsgid = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                    else:
+                        claude_share_lastmsgid = await matcher.send(reply_out(event, pic))
+                    try:
+                        await bot.delete_msg(message_id=claude_waitmsg['message_id'])
+                    except:
+                        pass
+                    claude_user_number -= 1
+                    await matcher.finish()
                 else:
-                    claude_share_lastmsgid = await matcher.send(reply_out(event, pic))
-                claude_user_number -= 1
-                try:
-                    await bot.delete_msg(message_id=claude_waitmsg['message_id'])
-                except:
-                    pass
-                await matcher.finish()
+                    try:
+                        await claude_share_page.close()
+                    except:
+                        pass
+                    pic,_ = await txt2img.draw(title=" ",text=msg)
+                    last_messageid[userid] = await matcher.send(reply_out(event, pic))
+                    try:
+                        await bot.delete_msg(message_id=claude_waitmsg['message_id'])
+                    except:
+                        pass
+                    claude_user_number -= 1
+                    await matcher.finish()
             else:
                 try:
                     await claude_share_page.close()
                 except:
                     pass
                 claude_share_lastmsgid = await matcher.send(reply_out(event, msg))
+                try:
+                    await bot.delete_msg(message_id=claude_waitmsg['message_id'])
+                except:
+                    pass
                 claude_user_number -= 1
                 await matcher.finish()
         else:
@@ -811,6 +883,42 @@ async def __poe_addprompt____(event: Event, state: T_State, infos: str = ArgStr(
     await poe_addprompt.finish("成功添加prompt")
     
 ######################################################
+######################################################
+poe_auto_change_prompt = on_command(
+    "poechangeprompt",
+    aliases={
+        "切换自动预设",
+        "pcp"
+        },
+    priority=4,
+    block=False)
+
+@poe_auto_change_prompt.handle()
+async def __poe_auto_change_prompt__(event: Event):
+    userid = str(event.user_id)
+    if userid not in superusers:
+        await poe_auto_change_prompt.finish("你不是管理员哦")
+    now = superuser_dict["auto_default"]
+    str_prompts = str()
+    for key, _ in prompts_dict.items():
+        str_prompts += f"{key}\n"
+    await poe_auto_change_prompt.send(f"现在的自动创建预设是{now}\n当前可用预设有：\n{str_prompts}")
+@poe_auto_change_prompt.got('name',prompt='请输入要切换到的预设名称')
+async def __poe_auto_change_prompt____(event: Event, state: T_State, infos: str = ArgStr("name")):
+    if infos in ["取消", "算了"]:
+        await poe_auto_change_prompt.finish("终止切换")
+
+    infos = infos.split(" ")
+    if len(infos) != 1:
+        await poe_auto_change_prompt.reject("你输入的信息有误，请检查后重新输入")
+    # # 将更新后的字典写回到JSON文件中
+    superuser_dict["auto_default"] = infos[0]
+    with open(superuser_path, 'w') as f:
+        json.dump(superuser_dict, f)
+    await poe_auto_change_prompt.finish("成功切换默认自动创建prompt")
+    
+######################################################
+######################################################
 poe_removeprompt = on_command(
     "poeremoveprompt",
     aliases={
@@ -866,12 +974,14 @@ async def __poe_help__(bot: Bot,event: Event):
     "************************\n"
     "--以下命令均支持用户隔离\n"
     "~对话:poetalk / ptalk / pt\n"
+    "*如果没创建机器人，对话将自动创建默认机器人\n"
     "~清空历史对话:poedump / pdump / pd\n"
     "~创建机器人:poecreate / 创建bot / pc\n"
     "~删除机器人:poeremove / 删除bot / pr\n"
     "~切换机器人:poeswitch / 切换bot / ps\n\n"
+    "************************\n"
     "--以下命令均是多用户共享的\n"
-    "搜索引擎返回的是链接及标题\n"
+    "~搜索引擎返回的是链接及标题\n"
     "~NeevaAI搜索引擎:poeneeva / pneeva / pn\n"
     "~共享的gpt对话:poesharegpt / psharegpt / psg\n"
     "~清空共享的gpt的对话历史:poegptdump / poegpt清除 / pgd\n"
@@ -881,7 +991,8 @@ async def __poe_help__(bot: Bot,event: Event):
     "--以下功能仅限poe管理员使用\n"
     "~登录:poelogin / plogin / pl\n"
     "~添加预设:poeaddprompt / 添加预设 / pap\n"
-    "~删除预设:poeremoveprompt / 删除预设 / prp"
+    "~删除预设:poeremoveprompt / 删除预设 / prp\n"
+    "~切换自动创建的默认预设:poechangeprompt / 切换自动预设 / pcp"
     )
     if is_pic_able:
         pic, url= await txt2img.draw(title="poe功能大全",text=msg)

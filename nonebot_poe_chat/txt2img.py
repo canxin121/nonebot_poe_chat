@@ -10,6 +10,7 @@ from .config import Config
 config = Config()
 abs_path = os.path.abspath(__file__)
 root = os.path.dirname(abs_path)
+qrable = config.qr_able
 DATA_ROOT = root
 DATA_PATH = DATA_ROOT + "/TXT2IMG"
 FONT_PATH = DATA_PATH + "/font"
@@ -161,11 +162,18 @@ class Txt2Img:
         # text_img.show()
         try:
             if background["type"] == "image":  # type: ignore
-                out_img = Image.new(
-                    "RGBA",
-                    (text_img.width + 2 * margin, text_img.height + 2 * margin + (text_img.width + 2 * margin) //4),
-                    (0, 0, 0, 0),
-                )
+                if qrable:
+                    out_img = Image.new(
+                        "RGBA",
+                        (text_img.width + 2 * margin, text_img.height + 2 * margin + (text_img.width + 2 * margin) //4),
+                        (0, 0, 0, 0),
+                    )
+                else:
+                    out_img = Image.new(
+                        "RGBA",
+                        (text_img.width + 2 * margin, text_img.height + 2 * margin),
+                        (0, 0, 0, 0),
+                    )
                 bg_img = await asyncio.to_thread(Image.open, background["image"])  # type: ignore
                 out_img = await tile_image( bg_img, out_img)
             elif background["type"] == "color":  # type: ignore
@@ -182,13 +190,14 @@ class Txt2Img:
         # out_img.show()
         h=out_img.height
         w=out_img.width
-        
-        qrcode,url = await get_qr_img(self.raw_text)
-        # 调整QRCode图像大小
-        new_qr_img_width = out_img.width // 4
-        new_qr_img_height=new_qr_img_width
-        qr_img = qrcode.resize((new_qr_img_width, new_qr_img_height))
-        out_img.paste(qr_img, ((w-new_qr_img_width)//2, h-margin-new_qr_img_height+20), None)
+        url = str
+        if qrable:
+            qrcode,url = await get_qr_img(self.raw_text)
+            # 调整QRCode图像大小
+            new_qr_img_width = out_img.width // 4
+            new_qr_img_height=new_qr_img_width
+            qr_img = qrcode.resize((new_qr_img_width, new_qr_img_height))
+            out_img.paste(qr_img, ((w-new_qr_img_width)//2, h-margin-new_qr_img_height+20), None)
         # out_img.show()
         try:
             border = template["border"]  # type: ignore

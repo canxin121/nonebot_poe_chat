@@ -42,12 +42,15 @@ class Config:
         self.user_path = str(self.path_ + r'/user_dict.json')
         self.prompt_path = str(self.path_ + r'/poe_prompt.json')
         self.cookie_path = str(self.path_ + r'/poe_cookie.json')
+        self.superuser_dict_path = str(self.path_ + r'/superuser_dict.json')
         self.url_able = True
         self.pic_able = True
+        self.qr_able = True
+        self.suggest_able = True
         self.server = None
         self.username = None
         self.passwd = None
-        
+        self.superuser_dict = {}
         self.superusers = []
         self.cookie_dict = {}
         self.user_dict = {}
@@ -84,6 +87,16 @@ class Config:
                 self.url_able = False
         except:
             pass
+        try:
+            if nonebot.get_driver().config.poe_suggestable == "False":
+                self.suggest_able = False
+        except:
+            pass
+        try:
+            if nonebot.get_driver().config.poe_qrable == "False":
+                self.qr_able = False
+        except:
+            pass
         
         # 加载用户配置文件
         if not os.path.exists(self.user_path):
@@ -115,5 +128,18 @@ class Config:
         
         with open(self.prompt_path, 'r') as f:
             self.prompts_dict = json.load(f)
-
+            
+        if not os.path.exists(self.superuser_dict_path):
+            # 获取目录路径
+            dir_path = os.path.dirname(self.superuser_dict_path)
+            # 如果目录不存在，则创建目录
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            with open(self.superuser_dict_path, 'w') as f:
+                f.write('{"auto_default":"\u9ed8\u8ba4","blacklist":[]}')
+                logger.info('superuser_dict.json 创建成功')
+            
+        
+        with open(self.superuser_dict_path, 'r') as f:
+            self.superuser_dict = json.load(f)
 

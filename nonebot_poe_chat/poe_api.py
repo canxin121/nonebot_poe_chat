@@ -64,19 +64,18 @@ async def get_message_async(page,botname, sleep,nosuggest=False):
 
             chat_list_raw = [a["node"] for a in chat_list_raw]
             chat_list_text = [a["text"] for a in chat_list_raw]
-            if nosuggest:
-                if chat_list_text[-1]:
-                    return chat_list_text, ["没有建议回复捏"]
-            else:
-                if chat_list_text[-1]:
-                    match_suggest = re.search(r'<section class="ChatMessageSuggestedReplies_suggestedRepliesContainer__JgW12">*(.*?)</section>', response, re.DOTALL)
-                    string_list = re.findall(r'>\s*([^<>\n]+)\s*<', match_suggest.group(1))
-                    if len(string_list) == 4 or len(string_list) == 5:
-                        return chat_list_text, string_list[0:4]
-                    if len(string_list) == 1:
-                        suggest_lost += 1
-                    if suggest_lost > 2:
-                        return chat_list_text, string_list
+            if chat_list_text[-1]:
+                if nosuggest:
+                        return chat_list_text, ["没有建议回复捏，这个文本后面后面会被忽略"]
+                else:
+                        match_suggest = re.search(r'<section class="ChatMessageSuggestedReplies_suggestedRepliesContainer__JgW12">*(.*?)</section>', response, re.DOTALL)
+                        string_list = re.findall(r'>\s*([^<>\n]+)\s*<', match_suggest.group(1))
+                        if len(string_list) == 4 or len(string_list) == 5:
+                            return chat_list_text, string_list[0:4]
+                        if len(string_list) == 1:
+                            suggest_lost += 1
+                        if suggest_lost > 2:
+                            return chat_list_text, string_list
         except :
             
             consecutive_errors += 1
@@ -93,6 +92,8 @@ async def poe_chat(botname,question,page,nosuggest=False):
         return "banned"
     elif result1 == False:
         return False
+    if not  config.suggest_able:
+        nosuggest = True
     result2 = await get_message_async(page, botname, sleep=2,nosuggest=nosuggest)
     if isinstance(result2, tuple):
         answers, suggests = result2
