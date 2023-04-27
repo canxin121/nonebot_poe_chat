@@ -70,7 +70,7 @@
 | poeshareclaude / pshareclaude / psc | 否 | 群聊、私聊 | 共享 Claude 对话 | 普通用户 |
 | poeclaudedump / poeclaude清除 / pcd | 否 | 群聊、私聊 | 清空共享的 Claude 对话历史 | 普通用户 |
     
-###管理员命令
+### 管理员命令
     
 | 指令 | 需要@ | 范围 | 说明 | 权限 |
 |:----:|:----:|:----:|:----:|:----:|
