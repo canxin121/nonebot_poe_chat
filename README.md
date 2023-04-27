@@ -1,6 +1,5 @@
 <p align="center">
-<a href="https://socialify.git.ci/canxin121/nonebot_poe_chat/image?description=1&descriptionEditable=%E5%9F%BA%E4%BA%8Enonebot%E5%92%8Cplaywright%2C%E5%B0%86poe.com%E6%8E%A5%E5%85%A5qq%E8%BF%9B%E8%A1%8C%E5%A4%9A%E5%8A%9F%E8%83%BD%E7%9A%84%E4%BE%BF%E6%8D%B7%E4%BD%BF%E7%94%A8&font=Rokkitt&forks=1&issues=1&language=1&logo=https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F69547456%3Fs%3D96%26v%3D4&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Auto
- " width="200" height="200" alt="nonebot_poe_chat"></a>
+<a href="https://socialify.git.ci/canxin121/nonebot_poe_chat/image?description=1&descriptionEditable=%E5%9F%BA%E4%BA%8Enonebot%E5%92%8Cplaywright%2C%E5%B0%86poe.com%E6%8E%A5%E5%85%A5qq%E8%BF%9B%E8%A1%8C%E5%A4%9A%E5%8A%9F%E8%83%BD%E7%9A%84%E4%BE%BF%E6%8D%B7%E4%BD%BF%E7%94%A8&font=Rokkitt&forks=1&issues=1&language=1&logo=https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F69547456%3Fs%3D96%26v%3D4&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Auto" width="200" height="200" alt="nonebot_poe_chat"></a>
 </p>
 <div align="center">
 
