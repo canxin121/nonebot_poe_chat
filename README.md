@@ -74,10 +74,10 @@
     
 | 指令 | 需要@ | 范围 | 说明 | 权限 |
 |:----:|:----:|:----:|:----:|:----:|
-| poelogin / plogin / pl | 否 | 私聊 | 登录账号 | poe管理员 |
+| poelogin / plogin / pl | 否 | 群聊、私聊 | 登录账号 | poe管理员 |
 | poeaddprompt / 添加预设 / pap | 否 | 群聊、私聊 | 添加预设 | poe管理员 |
 | poeremoveprompt / 删除预设 / prp | 否 | 群聊、私聊 | 删除预设 | poe管理员 |
-| poechangeprompt / 切换自动预设 / pcp | 否 | 群聊 | 切换自动创建的默认预设 | poe管理员 |
+| poechangeprompt / 切换自动预设 / pcp | 否 | 群聊、私聊 | 切换自动创建的默认预设 | poe管理员 |
     
 ## 示例
 
