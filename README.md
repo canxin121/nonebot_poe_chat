@@ -3,23 +3,22 @@
     <a href="https://github.com/canxin121">
       <img src="https://socialify.git.ci/canxin121/nonebot_poe_chat/image?description=1&amp;descriptionEditable=%E5%9F%BA%E4%BA%8Enonebot%E5%92%8Cplaywright%2C%E5%B0%86poe.com%E6%8E%A5%E5%85%A5qq%E8%BF%9B%E8%A1%8C%E5%A4%9A%E5%8A%9F%E8%83%BD%E7%9A%84%E4%BE%BF%E6%8D%B7%E4%BD%BF%E7%94%A8&amp;font=Rokkitt&amp;forks=1&amp;issues=1&amp;language=1&amp;logo=https://canxin121.github.io/docs/logo.png&amp;name=1&amp;owner=1&amp;pattern=Circuit%20Board&amp;pulls=1&amp;stargazers=1&amp;theme=Auto" width="500" height="250" alt="nonebot_poe_chat">
     </a>
-  </div>
-  
-  <style>
-    .mask {
-      border-radius: 10px;
-      background-color: white;
-      display: inline-block;
-      overflow: hidden;
-    }
+    <style>
+  .mask {
+    border-radius: 10px;
+    background-color: white;
+    display: inline-block;
+    overflow: hidden;
+  }
 
-    .mask img {
-      display: block;
-      height: auto;
-      width: 100%;
-    }
-  </style>
-  
+  .mask img {
+    display: block;
+    height: auto;
+    width: 100%;
+  }
+</style>
+  </div>
+
 </div>
 
 <p align="center">
