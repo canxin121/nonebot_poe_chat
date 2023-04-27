@@ -48,6 +48,16 @@
 - 插件储存数据放置在./data/poe_chat中  
 - 支持填写代理地址http,https,socks，及其username,password
 
+ ##指令大全
+    
+| 指令 | 需要@ | 范围 | 说明 | 权限 |
+|:----:|:----:|:----:|:----:|:----:|
+| poetalk / ptalk / pt | 否 | 私聊、群聊 | 进行对话 | 普通用户 |
+| poedump / pdump / pd | 否 | 私聊、群聊 | 清空历史对话 | 普通用户 |
+| poecreate / 创建bot / pc | 否 | 群聊、私聊 | 创建机器人 | 普通用户 |
+| poeremove / 删除bot / pr | 否 | 群聊、私聊 | 删除机器人 | 普通用户 |
+| poeswitch / 切换bot / ps | 否 | 群聊、私聊 | 切换机器人 | 普通用户 |
+
 ## 示例
 
 | Image 1 | Image 2 |
