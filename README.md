@@ -23,7 +23,7 @@
     </a>
 </p>
 <div align="left">
-
+[![残心小站-文档库](https://socialify.git.ci/canxin121/nonebot_poe_chat/image?font=Jost&issues=1&language=1&logo=https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F69547456%3Fs%3D400%26u%3Db76d516a84fdabe178f04a82be0e53b6c8bdfdf7%26v%3D4&name=1&owner=1&pattern=Plus&stargazers=1&theme=Auto)](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html)
 > 详细教程跳转👇  
 > [残心小站-文档库](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
 
