@@ -52,6 +52,7 @@ class Config:
         self.passwd = None
         self.superuser_dict = {}
         self.superusers = []
+        self.blacklist = []
         self.cookie_dict = {}
         self.user_dict = {}
         self.prompts_dict = {}
@@ -63,6 +64,10 @@ class Config:
         # 加载超级用户配置
         try:
             self.superusers = nonebot.get_driver().config.poe_superusers
+        except:
+            pass
+        try:
+            self.blacklist = nonebot.get_driver().config.poe_blacklist
         except:
             pass
         try:
@@ -137,9 +142,8 @@ class Config:
                 os.makedirs(dir_path)
             with open(self.superuser_dict_path, 'w') as f:
                 f.write('{"auto_default":"\u9ed8\u8ba4","blacklist":[]}')
-                logger.info('superuser_dict.json 创建成功')
-            
-        
+                logger.info('superuser_dict.json 创建成功')            
+                        
         with open(self.superuser_dict_path, 'r') as f:
             self.superuser_dict = json.load(f)
 

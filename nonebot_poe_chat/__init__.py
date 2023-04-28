@@ -27,6 +27,7 @@ cookie_path = config.cookie_path
 superuser_path = config.superuser_dict_path
 suggest_able = config.suggest_able
 superusers = config.superusers
+blacklist = config.blacklist
 is_cookie_exists = config.is_cookie_exists
 is_pic_able = config.pic_able
 is_url_able = config.url_able
@@ -45,22 +46,24 @@ poe_create_ = on_command(
     block=False)
 @poe_create_.handle()
 async def __(matcher:Matcher,state: T_State,event: Event):
-    create_msgs[str(event.user_id)] = []
-    state["user_id"] = str(event.user_id)
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
+    create_msgs[userid] = []
+    state["user_id"] = userid
+    if len(prompts_dict)>0:
+        str_prompts = str()
+        for key, _ in prompts_dict.items():
+            str_prompts += f"{key}\n"
+        # create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, f"当前预设有：\n{str_prompts}")))
+        msg = f"当前预设有：\n{str_prompts}\n请输入\n1.机器人名称,\n2.基础模型选项，可选项为（gpt3_5输入1,claude输入2）,\n3.自定义预设（预设内容中间不要有空格） 或 \".\" + 可用本地预设名\n三个参数中间用空格隔开\n最终格式示例:\n示例一：chat 2 一个智能助理\n示例二： claude 1 .默认\n输入取消 或 算了可以终止创建"
+        create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, msg)))
     else:
-        if len(prompts_dict)>0:
-            str_prompts = str()
-            for key, _ in prompts_dict.items():
-                str_prompts += f"{key}\n"
-            # create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, f"当前预设有：\n{str_prompts}")))
-            msg = f"当前预设有：\n{str_prompts}\n请输入\n1.机器人名称,\n2.基础模型选项，可选项为（gpt3_5输入1,claude输入2）,\n3.自定义预设（预设内容中间不要有空格） 或 \".\" + 可用本地预设名\n三个参数中间用空格隔开\n最终格式示例:\n示例一：chat 2 一个智能助理\n示例二： claude 1 .默认\n输入取消 或 算了可以终止创建"
-            create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, msg)))
-        else:
-            create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "")))
-            msg = f"当前没有可用本地预设\n\n请输入\n1.机器人名称,\n2.基础模型选项，可选项为（gpt3_5输入1,claude输入2）,\n3.自定义预设（预设内容中间不要有空格） 或 \".\" + 可用本地预设名\n三个参数中间用空格隔开\n最终格式示例:\n示例一：chat 2 一个智能助理\n示例二： claude 1 .默认\n输入取消 或 算了可以终止创建"
-            create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, msg)))
+        create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, "")))
+        msg = f"当前没有可用本地预设\n\n请输入\n1.机器人名称,\n2.基础模型选项，可选项为（gpt3_5输入1,claude输入2）,\n3.自定义预设（预设内容中间不要有空格） 或 \".\" + 可用本地预设名\n三个参数中间用空格隔开\n最终格式示例:\n示例一：chat 2 一个智能助理\n示例二： claude 1 .默认\n输入取消 或 算了可以终止创建"
+        create_msgs[str(event.user_id)].append(await matcher.send(reply_out(event, msg)))
 
 @poe_create_.got('model')
 async def __poe_create___(bot: Bot,matcher: Matcher,event: Event,state: T_State, infos: str = ArgStr("model")):
@@ -135,7 +138,18 @@ async def __poe_create___(bot: Bot,matcher: Matcher,event: Event,state: T_State,
                 await poe_switch.finish()
 
 ######################################################    
-
+def is_blacked(event):
+    try:
+        if str(event.user_id) in blacklist:
+            return True
+    except:
+        pass
+    try:
+        if str(event.group_id) in blacklist:
+            return True
+    except:
+        pass
+    return False
 chat_lock = asyncio.Semaphore(3)
 #像这样的全局变量都是临时的
 chat_suggest = {}
@@ -153,9 +167,11 @@ poe_chat_ = on_command(
 @poe_chat_.handle()
 async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg()):
     global chat_lock,chat_suggest,last_messageid,chat_pages,create_pages
-    userid = str(event.user_id)
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     if userid not in user_dict:
         random = generate_random_string()
         truename = str(generate_uuid(str(userid + random)))
@@ -182,7 +198,10 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
     if userid in chat_suggest and len(str(args[0])) == 1 and str(args[0]) in ['1','2','3','4']:
         text = chat_suggest[userid][int(str(args[0]))-1]
     else:
-        text = str(args[0])
+        try:
+            text = str(args[0])
+        except:
+            await matcher.finish()
     botname = str(list(user_dict[userid]["now"].values())[0])
     if userid in chat_pages:
         await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后再发送"))
@@ -272,6 +291,8 @@ _poe_continue_ = on(rule=is_reply)
 async def __poe_continue__(matcher: Matcher,event:MessageEvent):
     global chat_lock,last_messageid,chat_pages
     userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     raw_message = str(event.message)
     if userid in chat_pages:
         await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后在发送"))
@@ -363,11 +384,16 @@ poe_neeva_ = on_command(
     block=False)
 @poe_neeva_.handle()
 async def __poe_neeva__(matcher:Matcher,event: Event, args: Message = CommandArg()):
-    global last_messageid
-    text = str(args[0])
-    userid = str(event.user_id)
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    global last_messageid
+    try:
+        text = str(args[0])
+    except:
+        await matcher.finish()
+    userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     if neeva_lock.locked():
         await matcher.send(reply_out(event, "请稍等,正有一个人在使用ai搜索"))
     async with neeva_lock:
@@ -415,10 +441,15 @@ poe_share_gpt_ = on_command(
 @poe_share_gpt_.handle()
 async def __poe_share_gpt__(bot:Bot,matcher:Matcher,event: Event, args: Message = CommandArg()):
     global gpt_share_lastmsgid,gpt_share_suggests,gpt_user_number
-    text = str(args[0])
-    userid = str(event.user_id)
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    try:
+        text = str(args[0])
+    except:
+        await matcher.finish()
+    userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     if gpt_share_lock.locked() and gpt_user_number <= 4:
         gpt_waitmsg = await matcher.send(reply_out(event, "还没回答完上一个问题，稍等马上回复你"))
     if gpt_user_number>4:
@@ -508,6 +539,9 @@ poe_gpt_clear_ = on_command(
     block=False)
 @poe_gpt_clear_.handle()
 async def __poe_gpt_clear___(event: Event,matcher:Matcher):
+    userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "机器人管理员还没填写可用的poe_cookie或登陆"))
     if gpt_share_lock.locked():
@@ -541,10 +575,15 @@ poe_share_claude_ = on_command(
 @poe_share_claude_.handle()
 async def __poe_share_claude__(bot:Bot,matcher:Matcher,event: Event, args: Message = CommandArg()):
     global claude_share_lastmsgid,claude_share_suggests,claude_user_number
-    text = str(args[0])
-    userid = str(event.user_id)
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    try:
+        text = str(args[0])
+    except:
+        await matcher.finish()
+    userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     if claude_share_lock.locked() and claude_user_number <= 4:
         claude_waitmsg = await matcher.send(reply_out(event, "还没回答完上一个问题，稍等马上回复你"))
     if claude_user_number>4:
@@ -634,6 +673,9 @@ poe_claude_clear_ = on_command(
     block=False)
 @poe_claude_clear_.handle()
 async def __poe_claude_clear___(event: Event,matcher:Matcher):
+    userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "机器人管理员还没填写可用的poe_cookie或登陆"))
     if claude_share_lock.locked():
@@ -661,10 +703,11 @@ poe_clear_ = on_command(
     block=False)
 @poe_clear_.handle()
 async def __poe_clear___(event: Event,matcher:Matcher):
+    userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "机器人管理员还没填写可用的poe_cookie或登陆"))
-    userid = str(event.user_id)
-    
     if userid not in user_dict:
         await matcher.finish(reply_out(event, "你还没有创建任何bot"))
     if userid in chat_pages:
@@ -699,6 +742,8 @@ async def __poe_switch__(bot:Bot ,matcher:Matcher,event: Event):
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
     userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     switch_msgs[userid] = []
     if userid not in user_dict:
         await matcher.finish(reply_out(event, "你还没创建任何bot"))
@@ -754,6 +799,8 @@ async def __poe_remove__(matcher:Matcher,event: Event):
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
     userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     remove_list[userid] = []
     if userid not in user_dict:
         await matcher.finish(reply_out(event, "你还没创建任何bot"))
@@ -851,7 +898,7 @@ poe_addprompt = on_command(
     block=False)
 
 @poe_addprompt.handle()
-async def __poe_addprompt__(event: Event):
+async def __poe_addprompt__(matcher:Matcher,event: Event):
     userid = str(event.user_id)
     if userid not in superusers:
         await poe_addprompt.finish("你不是管理员哦")
@@ -963,7 +1010,10 @@ poe_help = on_command(
     priority=4,
     block=False)
 @poe_help.handle()
-async def __poe_help__(bot: Bot,event: Event):
+async def __poe_help__(bot: Bot,matcher:Matcher,event: Event):
+    userid = str(event.user_id)
+    if is_blacked(event):
+        await matcher.finish()
     msg = (
     "共享的机器人供多人共同使用(仅支持命令来对话，不支持以下特性)\n"  
     "用户隔离的个人机器人使用,支持下面两个功能\n"  
