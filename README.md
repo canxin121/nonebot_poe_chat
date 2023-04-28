@@ -58,7 +58,9 @@
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(7).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(8).PNG) |
 
 ## 更新
-
+- 2023/4/28 v1.1.2:  
+    1.修复没有跟随命令发送询问内容时的报错（直接pass掉）  
+    2.增加黑名单配置  
 - 2023/4/27 v1.1.1:  
     1.支持管理员切换自动创建的预设  
     2.支持在配置中开启和关闭建议回复和图片中二维码，详情看上文 配置  
