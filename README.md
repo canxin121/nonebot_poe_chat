@@ -1,12 +1,9 @@
-<p align="center">
-<a href="https://github.com/canxin121/nonebot_poe_chat"><img src="https://github.com/canxin121/nonebot_paddle_ocr/blob/main/demo/logo_transparent.png" width="200" height="200" alt="nonebot_poe_chat"></a>
-</p>
 <div align="center">
-
-# nonebot_poe_chat
-
-✨*基于Nonebot和playwright，可以将poe.com接入qq*✨
-
+  <a href="https://github.com/canxin121">
+    <img src="https://socialify.git.ci/canxin121/nonebot_poe_chat/image?description=1&amp;descriptionEditable=%E5%9F%BA%E4%BA%8Enonebot%E5%92%8Cplaywright%2C%E5%B0%86poe.com%E6%8E%A5%E5%85%A5qq%E8%BF%9B%E8%A1%8C%E5%A4%9A%E5%8A%9F%E8%83%BD%E7%9A%84%E4%BE%BF%E6%8D%B7%E4%BD%BF%E7%94%A8&amp;font=Rokkitt&amp;forks=1&amp;issues=1&amp;language=1&amp;logo=https://canxin121.github.io/docs/logo.png&amp;name=1&amp;owner=1&amp;pattern=Circuit%20Board&amp;pulls=1&amp;stargazers=1&amp;theme=Auto" width="700" height="350">
+  </a>
+  <h1>nonebot_poe_chat</h1>
+  <p><em>基于Nonebot和playwright，可以将poe.com接入qq</em></p>
 </div>
 
 <p align="center">
@@ -23,10 +20,15 @@
     </a>
 </p>
 <div align="left">
- 
-> 详细教程跳转👇  
-> [残心小站-文档库](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
 
+---
+
+[![残心小站-文档库](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/cx.png )](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
+    
+> 详细教程 点击链接跳转👇 点击图片跳转☝️   
+## [残心小站-文档库](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
+
+---
 ## 功能特性
 
 - 可以使用gpt3.5和claude两种模型，支持自定义预设和本地预设  
