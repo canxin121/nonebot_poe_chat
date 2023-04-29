@@ -43,8 +43,8 @@ class Config:
         self.prompt_path = str(self.path_ + r'/poe_prompt.json')
         self.cookie_path = str(self.path_ + r'/poe_cookie.json')
         self.superuser_dict_path = str(self.path_ + r'/superuser_dict.json')
-        self.url_able = True
         self.pic_able = True
+        self.url_able = True
         self.qr_able = True
         self.suggest_able = True
         self.server = None
@@ -53,6 +53,8 @@ class Config:
         self.superuser_dict = {}
         self.superusers = []
         self.blacklist = []
+        self.whitelist = []
+        self.mode = "black"
         self.cookie_dict = {}
         self.user_dict = {}
         self.prompts_dict = {}
@@ -61,48 +63,23 @@ class Config:
             with open(self.cookie_path, 'r') as f:
                 cookies = json.load(f)
                 self.cookie_dict =cookies
-        # 加载超级用户配置
-        try:
-            self.superusers = nonebot.get_driver().config.poe_superusers
-        except:
-            pass
-        try:
-            self.blacklist = nonebot.get_driver().config.poe_blacklist
-        except:
-            pass
-        try:
-            if nonebot.get_driver().config.poe_picable == "False":
-                self.pic_able = False
-        except:
-            pass
-        try:
-            self.server = nonebot.get_driver().config.poe_server
-        except:
-            pass
-        try:
-            self.username = nonebot.get_driver().config.poe_username
-        except:
-            pass
-        try:
-            self.passwd = nonebot.get_driver().config.poe_passwd
-        except:
-            pass
-        try:
-            if nonebot.get_driver().config.poe_urlable == "False":
-                self.url_able = False
-        except:
-            pass
-        try:
-            if nonebot.get_driver().config.poe_suggestable == "False":
-                self.suggest_able = False
-        except:
-            pass
-        try:
-            if nonebot.get_driver().config.poe_qrable == "False":
-                self.qr_able = False
-        except:
-            pass
-        
+                
+        get_config = nonebot.get_driver().config
+
+        self.superusers = get_config.poe_superusers if hasattr(get_config, 'poe_superusers') else None
+        self.blacklist = get_config.poe_blacklist if hasattr(get_config, 'poe_blacklist') else None
+        self.whitelist = get_config.poe_whitelist if hasattr(get_config, 'poe_whitelist') else None
+
+        self.mode = get_config.poe_mode if hasattr(get_config, 'poe_mode') and get_config.poe_mode in ['white', 'black'] else 'black'
+
+        self.pic_able = getattr(get_config, 'poe_picable', True)
+        self.url_able = getattr(get_config, 'poe_urlable', True)
+        self.suggest_able = getattr(get_config, 'poe_suggestable', True)
+        self.qr_able = getattr(get_config, 'poe_qrable', True)
+
+        self.server = getattr(get_config, 'poe_server', None)
+        self.username = getattr(get_config, 'poe_username', None)
+        self.passwd = getattr(get_config, 'poe_passwd', None)
         # 加载用户配置文件
         if not os.path.exists(self.user_path):
             # 获取目录路径
@@ -113,7 +90,6 @@ class Config:
             with open(self.user_path, 'w') as f:
                 f.write('{}')
                 logger.info('user_dict.json 创建成功')
-            
         try:
             with open(self.user_path, 'r') as f:
                 self.user_dict = json.load(f)
