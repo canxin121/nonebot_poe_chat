@@ -43,10 +43,11 @@ class Config:
         self.prompt_path = str(self.path_ + r'/poe_prompt.json')
         self.cookie_path = str(self.path_ + r'/poe_cookie.json')
         self.superuser_dict_path = str(self.path_ + r'/superuser_dict.json')
-        self.pic_able = True
-        self.url_able = True
-        self.qr_able = True
-        self.suggest_able = True
+        self.pic_able = None
+        self.url_able = "True"
+        self.qr_able = "True"
+        self.suggest_able = "True"
+        self.num_limit = 350
         self.server = None
         self.username = None
         self.passwd = None
@@ -66,21 +67,21 @@ class Config:
                 
         get_config = nonebot.get_driver().config
 
-        self.superusers = get_config.poe_superusers if hasattr(get_config, 'poe_superusers') else None
-        self.blacklist = get_config.poe_blacklist if hasattr(get_config, 'poe_blacklist') else None
-        self.whitelist = get_config.poe_whitelist if hasattr(get_config, 'poe_whitelist') else None
+        self.superusers = get_config.poe_superusers if hasattr(get_config, 'poe_superusers') else []
+        self.blacklist = get_config.poe_blacklist if hasattr(get_config, 'poe_blacklist') else []
+        self.whitelist = get_config.poe_whitelist if hasattr(get_config, 'poe_whitelist') else self.superusers
 
         self.mode = get_config.poe_mode if hasattr(get_config, 'poe_mode') and get_config.poe_mode in ['white', 'black'] else 'black'
 
-        self.pic_able = getattr(get_config, 'poe_picable', True)
-        self.url_able = getattr(get_config, 'poe_urlable', True)
-        self.suggest_able = getattr(get_config, 'poe_suggestable', True)
-        self.qr_able = getattr(get_config, 'poe_qrable', True)
+        self.pic_able = getattr(get_config, 'poe_picable', None)
+        self.url_able = getattr(get_config, 'poe_urlable', "True")
+        self.suggest_able = getattr(get_config, 'poe_suggestable', "True")
+        self.qr_able = getattr(get_config, 'poe_qrable', "True")
 
         self.server = getattr(get_config, 'poe_server', None)
         self.username = getattr(get_config, 'poe_username', None)
         self.passwd = getattr(get_config, 'poe_passwd', None)
-        # 加载用户配置文件
+        self.num_limit = int(getattr(get_config, 'poe_limit', '350'))
         if not os.path.exists(self.user_path):
             # 获取目录路径
             dir_path = os.path.dirname(self.user_path)

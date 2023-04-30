@@ -7,7 +7,14 @@ from nonebot import logger, require
 require("nonebot_plugin_guild_patch")
 from nonebot_plugin_guild_patch import GuildMessageEvent
 from nonebot.adapters.onebot.v11 import Message,MessageEvent,MessageSegment
+from .txt2img import Txt2Img
 config = Config()
+txt2img = Txt2Img()
+is_suggest_able = config.suggest_able
+is_pic_able = config.pic_able
+is_url_able = config.url_able
+is_qr_able = config.qr_able
+num_limit = config.num_limit
 def reply_out(event: MessageEvent, content: Union[MessageSegment,Message,str,bytes]) -> Message:
     """返回一个回复消息"""
     if isinstance(event, GuildMessageEvent):
@@ -37,27 +44,6 @@ def is_email(email) -> bool:
     pattern = r'^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$'
     return bool(re.match(pattern, email))
 
-async def get_qr_img(text):
-    """将 Markdown 文本保存到 Mozilla Pastebin，并获得 URL"""
-    async with aiohttp.ClientSession() as session:
-        payload = {'expires': '86400', 'format': 'url', 'lexer': '_markdown', 'content': text}
-        retries = 3
-        while retries > 0:
-            try:
-                async with session.post('https://pastebin.mozilla.org/api/',
-                                        data=payload) as resp:
-                    resp.raise_for_status()
-                    url = await resp.text()
-                    url = url[0:-1]
-                    image = qrcode.make(url)
-                    return image, url
-            except Exception as e:
-                retries -= 1
-                if retries == 0:
-                    url = f"上传失败：{str(e)}"
-                    image = qrcode.make(url)
-                    return image, url
-                await asyncio.sleep(1)
 async def delete_messages(bot, user_id:str, dict_list:dict):
     if user_id in dict_list:
         if isinstance(dict_list[user_id], list):
@@ -105,3 +91,58 @@ def is_useable(event,mode = config.mode):
         except:
             pass
         return False
+async def close_page(page):
+    try:
+        await page.close()
+    except:
+        pass
+async def send_msg(result, matcher, event):
+    msgid_container = {}
+    suggest_container = []
+    async def send_message(msg):
+        if is_pic_able is not None:
+            if is_pic_able == 'True':
+                if is_qr_able == 'True':
+                    pic, url = await txt2img.draw(title=" ", text=msg)
+                    if is_url_able == 'True':
+                        msgid_container = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                    else:
+                        msgid_container = await matcher.send(reply_out(event, pic))
+                else:
+                    pic, _ = await txt2img.draw(title=" ", text=msg)
+                    msgid_container = await matcher.send(reply_out(event, pic))
+            else:
+                    msgid_container = await matcher.send(reply_out(event, msg))
+        else:
+            if len(msg) > num_limit:
+                pic, url = await txt2img.draw(title=" ", text=msg)
+                msgid_container = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))    
+            else:
+                msgid_container = await matcher.send(reply_out(event, msg))
+        return msgid_container
+    
+    if isinstance(result, tuple):
+        last_answer, suggest_container = result
+        is_successful = True
+    elif isinstance(result, str):
+        if "banned" == result:
+            await matcher.send(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
+            matcher.finish()
+            return msgid_container,[]
+    elif isinstance(result, bool):
+        is_successful = result
+    else:
+        raise ValueError("Unexpected return type from get_message_async")
+        
+    if is_successful:
+        suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(suggest_container)])
+        if is_suggest_able == 'True':
+            msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+        else:
+            msg = f"{last_answer}\n"
+        
+        msgid_container = await send_message(msg)
+        return msgid_container,suggest_container
+    else:
+        await matcher.send(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+        return msgid_container,suggest_container

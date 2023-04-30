@@ -5,8 +5,9 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 from PIL import Image, ImageDraw, ImageFont
-from .poe_func import get_qr_img
 from .config import Config
+import qrcode
+import aiohttp
 config = Config()
 abs_path = os.path.abspath(__file__)
 root = os.path.dirname(abs_path)
@@ -19,6 +20,28 @@ FONT_FILE = FONT_PATH + "/sarasa-mono-sc-regular.ttf"
 MI_BACKGROUND_FILE = IMAGE_PATH + "/mi_background.png"
 
 
+async def get_qr_img(text):
+    """将 Markdown 文本保存到 Mozilla Pastebin，并获得 URL"""
+    async with aiohttp.ClientSession() as session:
+        payload = {'expires': '86400', 'format': 'url', 'lexer': '_markdown', 'content': text}
+        retries = 3
+        while retries > 0:
+            try:
+                async with session.post('https://pastebin.mozilla.org/api/',
+                                        data=payload) as resp:
+                    resp.raise_for_status()
+                    url = await resp.text()
+                    url = url[0:-1]
+                    image = qrcode.make(url)
+                    return image, url
+            except Exception as e:
+                retries -= 1
+                if retries == 0:
+                    url = f"上传失败：{str(e)}"
+                    image = qrcode.make(url)
+                    return image, url
+                await asyncio.sleep(1)
+                
 templates = {
     "mi": {
         "font": str(FONT_FILE),
@@ -162,7 +185,7 @@ class Txt2Img:
         # text_img.show()
         try:
             if background["type"] == "image":  # type: ignore
-                if qrable:
+                if qrable == "True":
                     out_img = Image.new(
                         "RGBA",
                         (text_img.width + 2 * margin, text_img.height + 2 * margin + (text_img.width + 2 * margin) //4),
@@ -191,7 +214,7 @@ class Txt2Img:
         h=out_img.height
         w=out_img.width
         url = str
-        if qrable:
+        if qrable == "True":
             qrcode,url = await get_qr_img(self.raw_text)
             # 调整QRCode图像大小
             new_qr_img_width = out_img.width // 4

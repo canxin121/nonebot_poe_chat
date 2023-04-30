@@ -47,6 +47,7 @@ async def send_message_async(page: Page, botname: str, input_str: str):
 
 async def get_message_async(page,botname, sleep,nosuggest=False):
     consecutive_errors = 0
+    answer_lost = 0
     suggest_lost = 0
     while True:
         await asyncio.sleep(sleep)
@@ -56,6 +57,10 @@ async def get_message_async(page,botname, sleep,nosuggest=False):
             text = "This bot has been deleted for violating"
             if text in response:
                 return "banned"
+            if "Message_errorBubble" in response:
+                answer_lost += 1
+            if answer_lost > 2:
+                return False
             match_text = re.search(r'<script id="__NEXT_DATA__" type="application/json">*(.*?)</script>', response, re.DOTALL)
             json_data_text = match_text.group(1)
             json_obj_text = json.loads(json_data_text)
@@ -77,7 +82,6 @@ async def get_message_async(page,botname, sleep,nosuggest=False):
                         if suggest_lost > 2:
                             return chat_list_text, string_list
         except :
-            
             consecutive_errors += 1
             print(f"poe-chat：获取返回消息失败{consecutive_errors}次")
             if consecutive_errors >= 5:
@@ -92,7 +96,7 @@ async def poe_chat(botname,question,page,nosuggest=False):
         return "banned"
     elif result1 == False:
         return False
-    if not  config.suggest_able:
+    if config.suggest_able == 'False':
         nosuggest = True
     result2 = await get_message_async(page, botname, sleep=2,nosuggest=nosuggest)
     if isinstance(result2, tuple):
@@ -104,18 +108,6 @@ async def poe_chat(botname,question,page,nosuggest=False):
     elif isinstance(result2, bool):
         is_got = result2
         return is_got
-    
-    if isinstance(result2, tuple):
-        answers, suggests = result2
-        return answers[-1],suggests
-    elif isinstance(result2, str):
-        is_banned = result2
-        return "banned"
-    elif isinstance(result2, bool):
-        is_got = result2
-        return is_got
-    else:
-        raise ValueError("Unexpected return type from get_message_async")
 #清空聊天记录
 async def poe_clear(page, botname):
     try:

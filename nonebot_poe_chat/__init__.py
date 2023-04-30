@@ -2,14 +2,13 @@ import datetime
 import json,asyncio
 from typing import Annotated
 from nonebot.plugin import on_command, on, on_message 
-from nonebot.params import ArgStr, CommandArg, RawCommand
+from nonebot.params import ArgStr, CommandArg
 from nonebot.typing import T_State
 from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent,MessageSegment
 from nonebot.internal.rule import Rule
-from nonebot import logger
 from .config import Config
-from .poe_func import reply_out,generate_uuid,generate_random_string,is_email,delete_messages,mdlink_2_str,is_useable
+from .poe_func import reply_out,generate_uuid,generate_random_string,is_email,delete_messages,mdlink_2_str,is_useable,send_msg,close_page
 from .poe_api import poe_chat,poe_create,poe_clear,submit_email, submit_code
 from .txt2img import Txt2Img
 from .pwframework import PlaywrightFramework
@@ -26,10 +25,10 @@ user_path = config.user_path
 prompt_path = config.prompt_path
 cookie_path = config.cookie_path
 superuser_path = config.superuser_dict_path
-suggest_able = config.suggest_able
 superusers = config.superusers
 blacklist = config.blacklist
 is_cookie_exists = config.is_cookie_exists
+is_suggest_able = config.suggest_able
 is_pic_able = config.pic_able
 is_url_able = config.url_able
 is_qr_able = config.qr_able
@@ -202,67 +201,13 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
     async with chat_lock:
         chat_pages[userid] = await pwfw.new_page()
         result = await poe_chat(botname, text, chat_pages[userid])
-        if isinstance(result, tuple):
-            last_answer, chat_suggest[userid] = result
-            is_successful = True
-        elif isinstance(result, str):
-            if "banned" == result:
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                await matcher.finish(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
-        elif isinstance(result, bool):
-            is_successful = result
-        else:
-            #这个应该不可能出现
-            raise ValueError("Unexpected return type from get_message_async")
-
-        if is_successful:
-            suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(chat_suggest[userid])])
-            if suggest_able:
-                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
-            else:
-                msg = f"{last_answer}\n"
-            if is_pic_able:
-                if is_qr_able:
-                    pic,url = await txt2img.draw(title=" ",text=msg)
-                    try:
-                        await chat_pages[userid].close()
-                    except:
-                        pass
-                    del chat_pages[userid]
-                    if is_url_able:
-                        last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
-                    else:
-                        last_messageid[userid] = await matcher.send(reply_out(event, pic))
-                    await matcher.finish()
-                else:
-                    try:
-                        await chat_pages[userid].close()
-                    except:
-                        pass
-                    del chat_pages[userid]
-                    pic,_ = await txt2img.draw(title=" ",text=msg)
-                    last_messageid[userid] = await matcher.send(reply_out(event, pic))
-                    await matcher.finish()
-            else:
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                last_messageid[userid] = await matcher.send(reply_out(event, msg))
-                await matcher.finish()
-        else:
-            try:
-                await chat_pages[userid].close()
-            except:
-                pass
-            del chat_pages[userid]
-            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
-
+        await close_page(chat_pages[userid])
+        del chat_pages[userid]
+        last_messageid[userid] = {}
+        chat_suggest[userid] = []
+        last_messageid[userid], chat_suggest[userid]= await send_msg(result,matcher,event)\
+        
+        await matcher.finish()
 ######################################################
 #判断是不是同一个对话中
 async def _is_reply_(event:MessageEvent,bot:Bot):
@@ -287,6 +232,7 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
         await matcher.finish()
     raw_message = str(event.message)
     if userid in chat_pages:
+        print("continue")
         await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后在发送"))
         
     if raw_message in ["清除对话","清空对话","清除历史","清空历史","poedump","pdump","pd"]:
@@ -302,7 +248,7 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
                 msg = "出错了，多次错误请联系机器人主人"
             await matcher.finish(reply_out(event, msg)) 
     
-    if userid in chat_suggest and len(raw_message) == 1 and raw_message in ['1','2','3','4']:
+    if userid in chat_suggest and len(raw_message) == 1 and raw_message in ['1','2','3','4'] and is_suggest_able == "True":
             text = chat_suggest[userid][int(raw_message)-1]
     else:
         text = raw_message
@@ -315,69 +261,129 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
     async with chat_lock:
         chat_pages[userid] = await pwfw.new_page()
         result = await poe_chat(botname, text, chat_pages[userid])
-        if isinstance(result, tuple):
-            last_answer, chat_suggest[userid] = result
-            is_successful = True
-        elif isinstance(result, str):
-            if "banned" == result:
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                await matcher.finish(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
-        elif isinstance(result, bool):
-            is_successful = result
-        else:
-            try:
-                await chat_pages[userid].close()
-            except:
-                pass
+        await close_page(chat_pages[userid])
+        del chat_pages[userid]
+        last_messageid[userid] = {}
+        chat_suggest[userid] = []
+        last_messageid[userid], chat_suggest[userid]= await send_msg(result,matcher,event)\
+        
+        await matcher.finish()
+######################################################
+last_active_messageid = {}
+active_chat_suggest = {}
+poe_active = on_message(priority=1,block=False)
+@poe_active.handle()
+async def poe_activate_(matcher:Matcher,event: MessageEvent):
+    global last_active_messageid,active_chat_suggest
+    if not is_useable(event):
+        await matcher.finish()
+    userid = event.get_user_id()
+    msg = event.get_plaintext()
+    nickname = None
+    try:
+        bots = list(user_dict[userid]["all"].keys())
+        for each in bots:
+            if "/" + each in msg:
+                nickname = each
+                botname = user_dict[userid]["all"][each]
+                break
+    except:
+        matcher.finish()
+            
+    if not nickname:
+        await matcher.finish()
+    if userid in chat_pages:
+        await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后再发送"))
+        
+    if chat_lock.locked():
+        await matcher.send(reply_out(event, "请稍等,你前面已有3个用户,你的回答稍后就来"))
+    msg = msg.replace("/" + nickname + ' ',"").replace("/" + nickname,"")
+    if len(msg) == 0:
+        await matcher.finish()
+    if userid in active_chat_suggest and len(msg) == 1 and msg in ['1','2','3','4']:
+        text = active_chat_suggest[userid][nickname][int(msg)-1]
+    else:
+        text = msg
+        
+    if userid not in active_chat_suggest:
+        active_chat_suggest[userid] = {}
+    if userid not in last_active_messageid:
+        last_active_messageid[userid] = {}
+    async with chat_lock:
+        chat_pages[userid] = await pwfw.new_page()
+        result = await poe_chat(botname, text, chat_pages[userid])
+        await close_page(chat_pages[userid])
+        del chat_pages[userid]
+        last_active_messageid[userid][nickname] = {}
+        active_chat_suggest[userid][nickname] = []
+        last_active_messageid[userid][nickname],active_chat_suggest[userid][nickname] = await send_msg(result,matcher,event)
+        await matcher.finish()
+######################################################
+#判断是不是同一个对话中
+async def _is_active_reply_(event:MessageEvent,bot:Bot):
+    if bool(event.reply):
+        bot_id = bot.self_id
+        reply = event.reply
+        user_id = str(event.user_id)
+        sender_id = str(reply.sender.user_id)
+        if user_id not in last_active_messageid:
+            return False
+        # 遍历所有键值对
+        if sender_id != bot_id:
+            return False
+        try:
+            for key, value in last_active_messageid[user_id].items():
+                # 找到匹配的值
+                if list(value.values())[0] == reply.message_id:
+                    bot = key
+                    return bot
+        except:
+            pass
+        return False
+
+_poe_active_continue_ = on_message(priority=1,block=False)
+@_poe_active_continue_.handle()
+async def __poe_continue__(bot:Bot,matcher: Matcher,event:MessageEvent):
+    global chat_lock,last_messageid,chat_pages
+    if not is_useable(event):
+        await matcher.finish()
+    userid = str(event.user_id)
+    raw_message = str(event.message)
+    nickname = await _is_active_reply_(event,bot)
+    if not nickname:
+        await matcher.finish()
+    if userid in chat_pages:
+        print("active")
+        await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后在发送"))
+    botname = user_dict[userid]["all"][nickname]
+    if userid in active_chat_suggest and len(raw_message) == 1 and raw_message in ['1','2','3','4'] and is_suggest_able == "True":
+            text = active_chat_suggest[userid][nickname][int(raw_message)-1]
+    else:
+        text = raw_message
+
+    if raw_message in ["清除对话","清空对话","清除历史","清空历史","poedump","pdump","pd"]:
+        async with chat_lock:
+            chat_pages[userid] = await pwfw.new_page()
+            is_cleared = await poe_clear(chat_pages[userid],botname)
             del chat_pages[userid]
-            raise ValueError("Unexpected return type from get_message_async")
-        if is_successful:
-            suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(chat_suggest[userid])])
-            if suggest_able:
-                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
+            if is_cleared:
+                msg = f"成功清除了{nickname}的历史消息"
             else:
-                msg = f"{last_answer}\n"
-            if is_pic_able:
-                if is_qr_able:
-                    pic,url = await txt2img.draw(title=" ",text=msg)
-                    try:
-                        await chat_pages[userid].close()
-                    except:
-                        pass
-                    del chat_pages[userid]
-                    if is_url_able:
-                        last_messageid[userid] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
-                    else:
-                        last_messageid[userid] = await matcher.send(reply_out(event, pic))
-                    await matcher.finish()
-                else:
-                    try:
-                        await chat_pages[userid].close()
-                    except:
-                        pass
-                    del chat_pages[userid]
-                    pic,_ = await txt2img.draw(title=" ",text=msg)
-                    last_messageid[userid] = await matcher.send(reply_out(event, pic))
-                    await matcher.finish()
-            else:
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                last_messageid[userid] = await matcher.send(reply_out(event, msg))
-                await matcher.finish()
-        else:
-            try:
-                await chat_pages[userid].close()
-            except:
-                pass
-            del chat_pages[userid]
-            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+                msg = "出错了，多次错误请联系机器人主人"
+            await matcher.finish(reply_out(event, msg)) 
+    
+    if chat_lock.locked():
+        await matcher.send(reply_out(event, '请稍等,你前面已有3个用户'))
+        
+    async with chat_lock:
+        chat_pages[userid] = await pwfw.new_page()
+        result = await poe_chat(botname, text, chat_pages[userid])
+        await close_page(chat_pages[userid])
+        del chat_pages[userid]
+        last_active_messageid[userid][nickname] = {}
+        active_chat_suggest[userid][nickname] = []
+        last_active_messageid[userid][nickname],active_chat_suggest[userid][nickname] = await send_msg(result,matcher,event)
+        await matcher.finish()
 ######################################################
 neeva_lock = asyncio.Lock()
 poe_neeva_ = on_command(
@@ -464,76 +470,13 @@ async def __poe_share_gpt__(bot:Bot,matcher:Matcher,event: Event, args: Message 
     async with gpt_share_lock:
         gpt_share_page = await pwfw.new_page()
         result = await poe_chat("ChatGPT", text, gpt_share_page)
-        if isinstance(result, tuple):
-            last_answer, gpt_share_suggests = result
-            is_successful = True
-        elif isinstance(result, bool):
-            is_successful = result
-        else:
-            try:
-                await gpt_share_page.close()
-            except:
-                pass
-            raise ValueError("Unexpected return type from get_message_async")
-        if is_successful:
-            suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(gpt_share_suggests)])
-            if suggest_able:
-                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
-            else:
-                msg = f"{last_answer}\n"
-            if is_pic_able:
-                if is_qr_able:
-                    pic,url = await txt2img.draw(title=" ",text=msg)
-                    try:
-                        await gpt_share_page.close()
-                    except:
-                        pass
-                    if is_url_able:
-                        gpt_share_lastmsgid = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
-                    else:
-                        gpt_share_lastmsgid = await matcher.send(reply_out(event, pic))
-                    try:
-                        await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
-                    except:
-                        pass
-                    gpt_user_number -= 1
-                    await matcher.finish()
-                else:
-                    try:
-                        await gpt_share_page.close()
-                    except:
-                        pass
-                    pic,_ = await txt2img.draw(title=" ",text=msg)
-                    gpt_share_lastmsgid = await matcher.send(reply_out(event, pic))
-                    try:
-                        await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
-                    except:
-                        pass
-                    gpt_user_number -= 1
-                    await matcher.finish()
-            else:
-                try:
-                    await gpt_share_page.close()
-                except:
-                    pass
-                gpt_share_lastmsgid = await matcher.send(reply_out(event, msg))
-                try:
-                    await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
-                except:
-                    pass
-                gpt_user_number -= 1
-                await matcher.finish()
-        else:
-            try:
-                await gpt_share_page.close()
-            except:
-                pass
-            gpt_user_number -= 1
-            try:
-                await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
-            except:
-                pass
-            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+        await close_page(gpt_share_page)
+        await send_msg(result,matcher,event)
+        try:
+            await bot.delete_msg(message_id=gpt_waitmsg['message_id'])
+        except:
+            pass
+        await matcher.finish()
 ######################################################   
 poe_gpt_clear_ = on_command(
     "poegptdump",
@@ -598,76 +541,13 @@ async def __poe_share_claude__(bot:Bot,matcher:Matcher,event: Event, args: Messa
     async with claude_share_lock:
         claude_share_page = await pwfw.new_page()
         result = await poe_chat("Claude-instant", text, claude_share_page)
-        if isinstance(result, tuple):
-            last_answer, claude_share_suggests = result
-            is_successful = True
-        elif isinstance(result, bool):
-            is_successful = result
-        else:
-            try:
-                await claude_share_page.close()
-            except:
-                pass
-            raise ValueError("Unexpected return type from get_message_async")
-        if is_successful:
-            suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(claude_share_suggests)])
-            if suggest_able:
-                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
-            else:
-                msg = f"{last_answer}\n"
-            if is_pic_able:
-                if is_qr_able:
-                    pic,url = await txt2img.draw(title=" ",text=msg)
-                    try:
-                        await claude_share_page.close()
-                    except:
-                        pass
-                    if is_url_able:
-                        claude_share_lastmsgid = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
-                    else:
-                        claude_share_lastmsgid = await matcher.send(reply_out(event, pic))
-                    try:
-                        await bot.delete_msg(message_id=claude_waitmsg['message_id'])
-                    except:
-                        pass
-                    claude_user_number -= 1
-                    await matcher.finish()
-                else:
-                    try:
-                        await claude_share_page.close()
-                    except:
-                        pass
-                    pic,_ = await txt2img.draw(title=" ",text=msg)
-                    last_messageid[userid] = await matcher.send(reply_out(event, pic))
-                    try:
-                        await bot.delete_msg(message_id=claude_waitmsg['message_id'])
-                    except:
-                        pass
-                    claude_user_number -= 1
-                    await matcher.finish()
-            else:
-                try:
-                    await claude_share_page.close()
-                except:
-                    pass
-                claude_share_lastmsgid = await matcher.send(reply_out(event, msg))
-                try:
-                    await bot.delete_msg(message_id=claude_waitmsg['message_id'])
-                except:
-                    pass
-                claude_user_number -= 1
-                await matcher.finish()
-        else:
-            try:
-                await claude_share_page.close()
-            except:
-                pass
-            claude_user_number -= 1
-            try:
-                await bot.delete_msg(message_id=claude_waitmsg['message_id'])
-            except:
-                pass
-            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
+        await close_page(claude_share_page)
+        await send_msg(result,matcher,event)
+        try:
+            await bot.delete_msg(message_id=claude_waitmsg['message_id'])
+        except:
+            pass
+        await matcher.finish()
 ######################################################   
 poe_claude_clear_ = on_command(
     "poeclaudedump",
@@ -887,7 +767,6 @@ async def __poe_remove____(bot:Bot,matcher:Matcher,event: Event, infos: str = Ar
     await delete_messages(bot, userid, remove_list)
     await matcher.finish()
 #####################################################
-
 poe_login = on_command(
     "poelogin",
     aliases={
@@ -977,8 +856,6 @@ async def __poe_addprompt____(event: Event, state: T_State, infos: str = ArgStr(
     with open(prompt_path, 'w') as f:
         json.dump(prompts_dict, f)
     await poe_addprompt.finish("成功添加prompt")
-    
-######################################################
 ######################################################
 poe_auto_change_prompt = on_command(
     "poechangeprompt",
@@ -1012,8 +889,6 @@ async def __poe_auto_change_prompt____(event: Event, state: T_State, infos: str 
     with open(superuser_path, 'w') as f:
         json.dump(superuser_dict, f)
     await poe_auto_change_prompt.finish("成功切换默认自动创建prompt")
-    
-######################################################
 ######################################################
 poe_removeprompt = on_command(
     "poeremoveprompt",
@@ -1097,252 +972,6 @@ async def __poe_help__(bot: Bot,matcher:Matcher,event: Event):
     "~删除预设:poeremoveprompt / 删除预设 / prp\n"
     "~切换自动创建的默认预设:poechangeprompt / 切换自动预设 / pcp"
     )
-    if is_pic_able:
-        pic, url= await txt2img.draw(title="poe功能大全",text=msg)
-        helpmsg = await poe_help.send(MessageSegment.image(pic))
-    else:
-        helpmsg = await poe_help.send(MessageSegment.text("*poe功能大全\n") + MessageSegment.text(msg))
-    await asyncio.sleep(60)
-    await bot.delete_msg(message_id=helpmsg['message_id'])
+    pic, url= await txt2img.draw(title="poe功能大全",text=msg)
+    await poe_help.send(MessageSegment.image(pic))
     await poe_help.finish()
-######################################################
-last_active_messageid = {}
-active_chat_suggest = {}
-poe_active = on_message(priority=1,block=False)
-@poe_active.handle()
-async def poe_activate_(matcher:Matcher,event: MessageEvent):
-    global last_active_messageid,active_chat_suggest
-    if not is_useable(event):
-        await matcher.finish()
-    userid = event.get_user_id()
-    msg = event.get_plaintext()
-    bot = None
-    
-    if userid in chat_pages:
-        await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后再发送"))
-        
-    if chat_lock.locked():
-        await matcher.send(reply_out(event, "请稍等,你前面已有3个用户,你的回答稍后就来"))
-        
-    try:
-        bots = list(user_dict[userid]["all"].keys())
-        for each in bots:
-            if "/" + each in msg:
-                bot = each
-                botname = user_dict[userid]["all"][each]
-                break
-    except:
-        matcher.finish()
-        
-    if not bot:
-        await matcher.finish()
-    msg = msg.replace("/" + bot + ' ',"").replace("/" + bot,"")
-    
-    if msg in ["清除对话","poedump","pdump","pd"]:
-        async with chat_lock:
-            chat_pages[userid] = await pwfw.new_page()
-            is_cleared = await poe_clear(chat_pages[userid],botname)
-            try:
-                await chat_pages[userid].close()
-            except:
-                pass
-            del chat_pages[userid]
-            if is_cleared:
-                msg = f"成功清除了{bot}的历史消息"
-            else:
-                msg = "出错了，多次错误请联系机器人主人"
-            await matcher.finish(reply_out(event, msg)) 
-    
-    if userid in active_chat_suggest and len(msg) == 1 and msg in ['1','2','3','4']:
-        text = active_chat_suggest[userid][bot][int(msg)-1]
-    else:
-        text = msg
-     
-    if userid not in active_chat_suggest:
-        active_chat_suggest[userid] = {}
-    if userid not in last_active_messageid:
-        last_active_messageid[userid] = {}
-    async with chat_lock:
-        chat_pages[userid] = await pwfw.new_page()
-        result = await poe_chat(botname, text, chat_pages[userid])
-        if isinstance(result, tuple):
-            last_answer, active_chat_suggest[userid][bot] = result
-            is_successful = True
-        elif isinstance(result, str):
-            if "banned" == result:
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                await matcher.finish(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
-        elif isinstance(result, bool):
-            is_successful = result
-        else:
-            #这个应该不可能出现
-            raise ValueError("Unexpected return type from get_message_async")
-
-        if is_successful:
-            suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(active_chat_suggest[userid][bot])])
-            if suggest_able:
-                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
-            else:
-                msg = f"{last_answer}\n"
-            if is_pic_able:
-                if is_qr_able:
-                    pic,url = await txt2img.draw(title=" ",text=msg)
-                    try:
-                        await chat_pages[userid].close()
-                    except:
-                        pass
-                    del chat_pages[userid]
-                    if is_url_able:
-                        last_active_messageid[userid][bot] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
-                    else:
-                        last_active_messageid[userid][bot] = await matcher.send(reply_out(event, pic))
-                    await matcher.finish()
-                else:
-                    try:
-                        await chat_pages[userid].close()
-                    except:
-                        pass
-                    del chat_pages[userid]
-                    pic,_ = await txt2img.draw(title=" ",text=msg)
-                    last_active_messageid[userid][bot] = await matcher.send(reply_out(event, pic))
-                    await matcher.finish()
-            else:
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                last_active_messageid[userid][bot] = await matcher.send(reply_out(event, msg))
-                await matcher.finish()
-        else:
-            try:
-                await chat_pages[userid].close()
-            except:
-                pass
-            del chat_pages[userid]
-            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
-######################################################
-#判断是不是同一个对话中
-async def _is_active_reply_(event:MessageEvent,bot:Bot):
-    if bool(event.reply):
-        bot_id = bot.self_id
-        reply = event.reply
-        user_id = str(event.user_id)
-        sender_id = str(reply.sender.user_id)
-        # 遍历所有键值对
-        if sender_id != bot_id:
-            return False
-        try:
-            for key, value in last_active_messageid[user_id].items():
-                # 找到匹配的值
-                if list(value.values())[0] == reply.message_id:
-                    bot = key
-                    return bot
-        except:
-            pass
-        return False
-
-_poe_active_continue_ = on_message(priority=1,block=False,rule=_is_active_reply_)
-@_poe_active_continue_.handle()
-async def __poe_continue__(bot:Bot,matcher: Matcher,event:MessageEvent):
-    global chat_lock,last_messageid,chat_pages
-    if not is_useable(event):
-        await matcher.finish()
-    userid = str(event.user_id)
-    raw_message = str(event.message)
-    if userid in chat_pages:
-        await matcher.finish(reply_out(event, "你已经有一个对话进行中了，请等结束后在发送"))
-    botname = await _is_active_reply_(event,bot)
-    if not botname:
-        await matcher.finish()
-    truename = user_dict[userid]["all"][botname]
-    if userid in active_chat_suggest and len(raw_message) == 1 and raw_message in ['1','2','3','4']:
-            text = active_chat_suggest[userid][botname][int(raw_message)-1]
-    else:
-        text = raw_message
-
-    if raw_message in ["清除对话","清空对话","清除历史","清空对话","poedump","pdump","pd"]:
-        async with chat_lock:
-            chat_pages[userid] = await pwfw.new_page()
-            is_cleared = await poe_clear(chat_pages[userid],truename)
-            del chat_pages[userid]
-            if is_cleared:
-                msg = f"成功清除了{botname}的历史消息"
-            else:
-                msg = "出错了，多次错误请联系机器人主人"
-            await matcher.finish(reply_out(event, msg)) 
-    
-    if chat_lock.locked():
-        await matcher.send(reply_out(event, '请稍等,你前面已有3个用户'))
-        
-    async with chat_lock:
-        chat_pages[userid] = await pwfw.new_page()
-        result = await poe_chat(truename, text, chat_pages[userid])
-        if isinstance(result, tuple):
-            last_answer, active_chat_suggest[userid][botname] = result
-            is_successful = True
-        elif isinstance(result, str):
-            if "banned" == result:
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                await matcher.finish(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
-        elif isinstance(result, bool):
-            is_successful = result
-        else:
-            try:
-                await chat_pages[userid].close()
-            except:
-                pass
-            del chat_pages[userid]
-            raise ValueError("Unexpected return type from get_message_async")
-        if is_successful:
-            suggest_str = '\n'.join([f"{i+1}: {s}" for i, s in enumerate(active_chat_suggest[userid][botname])])
-            if suggest_able:
-                msg = f"{last_answer}\n\n建议回复：\n{suggest_str}"
-            else:
-                msg = f"{last_answer}\n"
-            if is_pic_able:
-                if is_qr_able:
-                    pic,url = await txt2img.draw(title=" ",text=msg)
-                    try:
-                        await chat_pages[userid].close()
-                    except:
-                        pass
-                    del chat_pages[userid]
-                    if is_url_able:
-                        last_active_messageid[userid][botname] = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
-                    else:
-                        last_active_messageid[userid][botname] = await matcher.send(reply_out(event, pic))
-                    await matcher.finish()
-                else:
-                    try:
-                        await chat_pages[userid].close()
-                    except:
-                        pass
-                    del chat_pages[userid]
-                    pic,_ = await txt2img.draw(title=" ",text=msg)
-                    last_active_messageid[userid][botname] = await matcher.send(reply_out(event, pic))
-                    await matcher.finish()
-            else:
-                try:
-                    await chat_pages[userid].close()
-                except:
-                    pass
-                del chat_pages[userid]
-                last_active_messageid[userid][botname] = await matcher.send(reply_out(event, msg))
-                await matcher.finish()
-        else:
-            try:
-                await chat_pages[userid].close()
-            except:
-                pass
-            del chat_pages[userid]
-            await matcher.finish(reply_out(event, "出错了，多次出错请联系机器人管理员"))
-######################################################
