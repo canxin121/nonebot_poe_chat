@@ -115,8 +115,15 @@ async def send_msg(result, matcher, event):
                     msgid_container = await matcher.send(reply_out(event, msg))
         else:
             if len(msg) > num_limit:
-                pic, url = await txt2img.draw(title=" ", text=msg)
-                msgid_container = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))    
+                if is_qr_able == 'True':
+                    pic, url = await txt2img.draw(title=" ", text=msg)
+                    if is_url_able == 'True':
+                        msgid_container = await matcher.send(reply_out(event, pic)+MessageSegment.text(url))
+                    else:
+                        msgid_container = await matcher.send(reply_out(event, pic))
+                else:
+                    pic, _ = await txt2img.draw(title=" ", text=msg)
+                    msgid_container = await matcher.send(reply_out(event, pic))
             else:
                 msgid_container = await matcher.send(reply_out(event, msg))
         return msgid_container
