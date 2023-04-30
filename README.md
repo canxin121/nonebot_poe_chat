@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://github.com/canxin121">
-    <img src="https://socialify.git.ci/canxin121/nonebot_poe_chat/image?description=1&amp;descriptionEditable=%E5%9F%BA%E4%BA%8Enonebot%E5%92%8Cplaywright%2C%E5%B0%86poe.com%E6%8E%A5%E5%85%A5qq%E8%BF%9B%E8%A1%8C%E5%A4%9A%E5%8A%9F%E8%83%BD%E7%9A%84%E4%BE%BF%E6%8D%B7%E4%BD%BF%E7%94%A8&amp;font=Rokkitt&amp;forks=1&amp;issues=1&amp;language=1&amp;logo=https://canxin121.github.io/docs/logo.png&amp;name=1&amp;owner=1&amp;pattern=Circuit%20Board&amp;pulls=1&amp;stargazers=1&amp;theme=Auto" width="700" height="350">
+    <img src="https://socialify.git.ci/canxin121/nonebot_poe_chat/image?description=1&amp;descriptionEditable=%E5%9F%BA%E4%BA%8Enonebot%E5%92%8Cplaywright%2C%E5%B0%86poe.com%E6%8E%A5%E5%85%A5qq%E8%BF%9B%E8%A1%8C%E5%A4%9A%E5%8A%9F%E8%83%BD%E7%9A%84%E4%BE%BF%E6%8D%B7%E4%BD%BF%E7%94%A8&amp;font=Rokkitt&amp;forks=1&amp;issues=1&amp;language=1&amp;logo=https://canxin121.github.io/docs/logo.png&amp;name=1&amp;owner=1&amp;pattern=CircuitBoard&amp;pulls=1&amp;stargazers=1&amp;theme=Auto" width="700" height="350">
   </a>
   <h1>nonebot_poe_chat</h1>
   <p><em>基于Nonebot和playwright，可以将poe.com接入qq</em></p>
@@ -51,14 +51,15 @@
 
 | Image 1 | Image 2 |
 |:-------:|:-------:|
-| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(1).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(2).PNG) |
+| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(1).png) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(2).png) |
 | Image 3 | Image 4 |
-| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(3).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(4).PNG) |
+| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(3).png) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(4).png) |
 | Image 5 | Image 6 |
-| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(5).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(6).PNG) |
+| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(5).png) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(6).png) |
 | Image 7 | Image 8 |
-| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(7).PNG) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo%20(8).PNG) |
-
+| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(7).png) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(8).png) |
+| Image 9 | Image 10 |
+| ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(9).png) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(10).png) |
 ## 更新
 
 - 2023/4/30 v1.1.4:  
