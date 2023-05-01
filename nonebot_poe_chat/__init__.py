@@ -205,7 +205,10 @@ async def __chat_bot__(matcher:Matcher,event: Event, args: Message = CommandArg(
         del chat_pages[userid]
         last_messageid[userid] = {}
         chat_suggest[userid] = []
-        last_messageid[userid], chat_suggest[userid]= await send_msg(result,matcher,event)\
+        last_messageid[userid], chat_suggest_temp= await send_msg(result,matcher,event)
+        if len(chat_suggest_temp) > 0:
+            chat_suggest[userid] = []
+            chat_suggest[userid] = chat_suggest_temp
         
         await matcher.finish()
 ######################################################
@@ -265,8 +268,10 @@ async def __poe_continue__(matcher: Matcher,event:MessageEvent):
         del chat_pages[userid]
         last_messageid[userid] = {}
         chat_suggest[userid] = []
-        last_messageid[userid], chat_suggest[userid]= await send_msg(result,matcher,event)\
-        
+        last_messageid[userid], chat_suggest_temp= await send_msg(result,matcher,event)
+        if len(chat_suggest_temp) > 0:
+            chat_suggest[userid] = []
+            chat_suggest[userid] = chat_suggest_temp
         await matcher.finish()
 ######################################################
 last_active_messageid = {}
@@ -316,7 +321,10 @@ async def poe_activate_(matcher:Matcher,event: MessageEvent):
         del chat_pages[userid]
         last_active_messageid[userid][nickname] = {}
         active_chat_suggest[userid][nickname] = []
-        last_active_messageid[userid][nickname],active_chat_suggest[userid][nickname] = await send_msg(result,matcher,event)
+        last_active_messageid[userid][nickname],active_chat_suggest_temp = await send_msg(result,matcher,event)
+        if len(active_chat_suggest_temp) > 0:
+            active_chat_suggest[userid][nickname] = []
+            active_chat_suggest[userid][nickname] = active_chat_suggest_temp
         await matcher.finish()
 ######################################################
 #判断是不是同一个对话中
@@ -382,7 +390,10 @@ async def __poe_continue__(bot:Bot,matcher: Matcher,event:MessageEvent):
         del chat_pages[userid]
         last_active_messageid[userid][nickname] = {}
         active_chat_suggest[userid][nickname] = []
-        last_active_messageid[userid][nickname],active_chat_suggest[userid][nickname] = await send_msg(result,matcher,event)
+        last_active_messageid[userid][nickname],active_chat_suggest_temp = await send_msg(result,matcher,event)
+        if len(active_chat_suggest_temp) > 0:
+            active_chat_suggest[userid][nickname] = []
+            active_chat_suggest[userid][nickname] = active_chat_suggest_temp
         await matcher.finish()
 ######################################################
 neeva_lock = asyncio.Lock()
@@ -398,7 +409,6 @@ poe_neeva_ = on_command(
 async def __poe_neeva__(matcher:Matcher,event: Event, args: Message = CommandArg()):
     if not is_cookie_exists:
         await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
-    global last_messageid
     try:
         text = str(args[0])
     except:
@@ -427,7 +437,7 @@ async def __poe_neeva__(matcher:Matcher,event: Event, args: Message = CommandArg
                 await neeva_page.close()
             except:
                 pass
-            last_messageid[userid] = await matcher.send(reply_out(event, msg))
+                await matcher.send(reply_out(event, msg))
             await matcher.finish()
         else:
             try:
@@ -833,7 +843,6 @@ async def __poe_addprompt__(matcher:Matcher,event: Event):
 
 @poe_addprompt.got('name',prompt='请输入预设名称\n输入取消 或 算了可以终止创建')
 async def __poe_addprompt____(event: Event, state: T_State, infos: str = ArgStr("name")):
-    global driver
     userid = str(event.user_id)
     if infos in ["取消", "算了"]:
         await poe_addprompt.finish("终止添加")
@@ -844,7 +853,7 @@ async def __poe_addprompt____(event: Event, state: T_State, infos: str = ArgStr(
     
 @poe_addprompt.got('prompt',prompt='请输入预设\n输入取消 或 算了可以终止创建')
 async def __poe_addprompt____(event: Event, state: T_State, infos: str = ArgStr("prompt")):
-    global driver
+    global prompts_dict
     userid = str(event.user_id)
     if infos in ["取消", "算了"]:
         await poe_addprompt.finish("终止添加")
@@ -912,7 +921,7 @@ async def __poe_removeprompt__(event: Event):
 
 @poe_removeprompt.got('name',prompt='请输入要删除的预设名称\n输入取消 或 算了可以终止创建')
 async def __poe_removeprompt____(event: Event, infos: str = ArgStr("name")):
-    global driver
+    global prompts_dict
     userid = str(event.user_id)
     if infos in ["取消", "算了"]:
         await poe_removeprompt.finish("终止删除")
