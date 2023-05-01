@@ -887,11 +887,11 @@ async def __poe_auto_change_prompt__(event: Event):
     await poe_auto_change_prompt.send(f"现在的自动创建预设是{now}\n当前可用预设有：\n{str_prompts}")
 @poe_auto_change_prompt.got('name',prompt='请输入要切换到的预设名称\n输入取消 或 算了可以终止创建')
 async def __poe_auto_change_prompt____(event: Event, state: T_State, infos: str = ArgStr("name")):
+    global superuser_dict
     if infos in ["取消", "算了"]:
         await poe_auto_change_prompt.finish("终止切换")
-
     infos = infos.split(" ")
-    if len(infos) != 1:
+    if len(infos) != 1 or infos[0] not in prompts_dict:
         await poe_auto_change_prompt.reject("你输入的信息有误，请检查后重新输入")
     # # 将更新后的字典写回到JSON文件中
     superuser_dict["auto_default"] = infos[0]
@@ -928,6 +928,8 @@ async def __poe_removeprompt____(event: Event, infos: str = ArgStr("name")):
     infos = infos.split(" ")
     if len(infos) != 1 or infos[0] not in prompts_dict:
         await poe_removeprompt.reject("你输入的信息有误，请检查后重新输入")
+    if infos[0] == superuser_dict["auto_default"]:
+        await poe_removeprompt.finish("不能删除自动创建gpt3.5时指定的预设")
     del prompts_dict[infos[0]]
     with open(prompt_path, 'w') as f:   
         json.dump(prompts_dict, f)

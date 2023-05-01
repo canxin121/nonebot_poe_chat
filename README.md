@@ -64,9 +64,10 @@
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(9).png) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(10).png) |
 ## 更新
 
+- 2023/5/1 v1.1.6:  
+    1.完善预设管理的逻辑  
 - 2023/5/1 v1.1.5:  
     1.修复回复失败后建议回复被清空的bug  
-
 - 2023/4/30 v1.1.4:  
     1.修复配置失效bug  
     2.优化回复逻辑，增加字数限制配置，未设置是否以图片形式回复的情况下，在字数小于指定字数时直接回复，大于时转化为图片回复  
