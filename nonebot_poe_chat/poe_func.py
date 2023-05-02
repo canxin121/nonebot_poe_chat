@@ -91,6 +91,19 @@ def is_useable(event,mode = config.mode):
         except:
             pass
         return False
+    
+def is_vip(event):
+        try:
+            if str(event.user_id) in config.accesslist:
+                return True
+        except:
+            pass
+        try:
+            if str(event.group_id) in config.accesslist:
+                return True
+        except:
+            pass
+        return False
 async def close_page(page):
     try:
         await page.close()
@@ -134,6 +147,10 @@ async def send_msg(result, matcher, event):
     elif isinstance(result, str):
         if "banned" == result:
             await matcher.send(reply_out(event, '你的机器人被banned了，请/pc新建一个机器人，并且不要在使用此预设'))
+            matcher.finish()
+            return msgid_container,[]
+        elif "limited" == result:
+            await matcher.send(reply_out(event, '今日免费限额已用尽，请订阅或等明天再使用'))
             matcher.finish()
             return msgid_container,[]
     elif isinstance(result, bool):

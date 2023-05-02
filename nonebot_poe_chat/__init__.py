@@ -8,7 +8,7 @@ from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent,MessageSegment
 from nonebot.internal.rule import Rule
 from .config import Config
-from .poe_func import reply_out,generate_uuid,generate_random_string,is_email,delete_messages,mdlink_2_str,is_useable,send_msg,close_page
+from .poe_func import reply_out,generate_uuid,generate_random_string,is_email,delete_messages,mdlink_2_str,is_useable,send_msg,close_page,is_vip
 from .poe_api import poe_chat,poe_create,poe_clear,submit_email, submit_code
 from .txt2img import Txt2Img
 from .pwframework import PlaywrightFramework
@@ -26,12 +26,12 @@ prompt_path = config.prompt_path
 cookie_path = config.cookie_path
 superuser_path = config.superuser_dict_path
 superusers = config.superusers
-blacklist = config.blacklist
 is_cookie_exists = config.is_cookie_exists
 is_suggest_able = config.suggest_able
 is_pic_able = config.pic_able
 is_url_able = config.url_able
 is_qr_able = config.qr_able
+
 ######################################################
 creat_lock = asyncio.Lock()        
 create_msgs = {}
@@ -587,7 +587,82 @@ async def __poe_claude_clear___(event: Event,matcher:Matcher):
     else:
         msg = "出错了，多次错误请联系机器人主人"
     await matcher.finish(reply_out(event, msg))
-######################################################
+######################################################  
+gpt4_share_lock = asyncio.Lock()
+gpt4_user_number = 0
+#先留着，后面用再说
+gpt4_share_lastmsgid = str
+
+gpt4_share_suggests = []
+poe_share_gpt4_ = on_command(
+    "poesharegpt4",
+    aliases={
+        "psharegpt4",
+        "psg4"
+        },
+    priority=1,
+    block=False)
+@poe_share_gpt4_.handle()
+async def __poe_share_gpt4__(bot:Bot,matcher:Matcher,event: Event, args: Message = CommandArg()):
+    global gpt4_share_lastmsgid,gpt4_share_suggests,gpt4_user_number
+    if not is_cookie_exists:
+        await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    try:
+        text = str(args[0])
+    except:
+        await matcher.finish()
+    userid = str(event.user_id)
+    if not is_useable(event):
+        await matcher.finish()
+    if not is_vip(event):
+        await matcher.finish()
+    if gpt4_share_lock.locked() and gpt4_user_number <= 4:
+        gpt4_waitmsg = await matcher.send(reply_out(event, "还没回答完上一个问题，稍等马上回复你"))
+    if gpt4_user_number>4:
+        await matcher.finish(reply_out(event, "我还有5个问题没回答呢，你等会再用吧"))
+    gpt4_user_number += 1
+    async with gpt4_share_lock:
+        gpt4_share_page = await pwfw.new_page()
+        result = await poe_chat("GPT-4", text, gpt4_share_page)
+        await close_page(gpt4_share_page)
+        await send_msg(result,matcher,event)
+        try:
+            await bot.delete_msg(message_id=gpt4_waitmsg['message_id'])
+        except:
+            pass
+        await matcher.finish()
+######################################################   
+poe_gpt4_clear_ = on_command(
+    "poegpt4dump",
+    aliases={
+        "poegpt4清除",
+        "pg4d"
+        },
+    priority=4,
+    block=False)
+@poe_gpt4_clear_.handle()
+async def __poe_gpt4_clear___(event: Event,matcher:Matcher):
+    userid = str(event.user_id)
+    if not is_useable(event):
+        await matcher.finish()
+    if not is_vip(event):
+        await matcher.finish()
+    if not is_cookie_exists:
+        await matcher.finish(reply_out(event, "机器人管理员还没填写可用的poe_cookie或登陆"))
+    if gpt4_share_lock.locked():
+        await matcher.finish(reply_out(event, "我还有一个问题没回答完呢"))
+    gpt4_clear_page = await pwfw.new_page()
+    is_cleared = await poe_clear(page=gpt4_clear_page,botname="GPT-4")
+    try:
+        await gpt4_clear_page.close()
+    except:
+        pass
+    if is_cleared:
+        msg = f"成功清除了GPT-4的历史消息"
+    else:
+        msg = "出错了，多次错误请联系机器人主人"
+    await matcher.finish(reply_out(event, msg))  
+###################################################### 
 clear_pages = {}
 poe_clear_ = on_command(
     "poedump",
@@ -628,7 +703,81 @@ async def __poe_clear___(event: Event,matcher:Matcher,args: Message = CommandArg
     else:
         msg = "出错了，多次错误请联系机器人主人"
     await matcher.finish(reply_out(event, msg))
-    
+######################################################    
+claude_plus_share_lock = asyncio.Lock()
+claude_plus_user_number = 0
+#先留着，后面用再说
+claude_plus_share_lastmsgid = str
+
+claude_plus_share_suggests = []
+poe_share_claude_plus_ = on_command(
+    "poeshareclaudep",
+    aliases={
+        "pshareclaudep",
+        "pscp"
+        },
+    priority=1,
+    block=False)
+@poe_share_claude_plus_.handle()
+async def __poe_share_claude_plus__(bot:Bot,matcher:Matcher,event: Event, args: Message = CommandArg()):
+    global claude_plus_share_lastmsgid,claude_plus_share_suggests,claude_plus_user_number
+    if not is_cookie_exists:
+        await matcher.finish(reply_out(event, "管理员还没填写可用的poe_cookie或登陆"))
+    try:
+        text = str(args[0])
+    except:
+        await matcher.finish()
+    userid = str(event.user_id)
+    if not is_useable(event):
+        await matcher.finish()
+    if not is_vip(event):
+        await matcher.finish()
+    if claude_plus_share_lock.locked() and claude_plus_user_number <= 4:
+        claude_plus_waitmsg = await matcher.send(reply_out(event, "还没回答完上一个问题，稍等马上回复你"))
+    if claude_plus_user_number>4:
+        await matcher.finish(reply_out(event, "我还有5个问题没回答呢，你等会再用吧"))
+    claude_plus_user_number += 1
+    async with claude_plus_share_lock:
+        claude_plus_share_page = await pwfw.new_page()
+        result = await poe_chat(r"Claude%2B", text, claude_plus_share_page)
+        await close_page(claude_plus_share_page)
+        await send_msg(result,matcher,event)
+        try:
+            await bot.delete_msg(message_id=claude_plus_waitmsg['message_id'])
+        except:
+            pass
+        await matcher.finish()
+######################################################   
+poe_claude_plus_clear_ = on_command(
+    "poeclaude+dump",
+    aliases={
+        "poeclaude+清除",
+        "pc+d"
+        },
+    priority=4,
+    block=False)
+@poe_claude_plus_clear_.handle()
+async def __poe_claude_plus_clear___(event: Event,matcher:Matcher):
+    userid = str(event.user_id)
+    if not is_useable(event):
+        await matcher.finish()
+    if not is_vip(event):
+        await matcher.finish()
+    if not is_cookie_exists:
+        await matcher.finish(reply_out(event, "机器人管理员还没填写可用的poe_cookie或登陆"))
+    if claude_plus_share_lock.locked():
+        await matcher.finish(reply_out(event, "我还有一个问题没回答完呢"))
+    claude_plus_clear_page = await pwfw.new_page()
+    is_cleared = await poe_clear(page=claude_plus_clear_page,botname=r"Claude%2B")
+    try:
+        await claude_plus_clear_page.close()
+    except:
+        pass
+    if is_cleared:
+        msg = f"成功清除了Claude+的历史消息"
+    else:
+        msg = "出错了，多次错误请联系机器人主人"
+    await matcher.finish(reply_out(event, msg))  
 ######################################################  
 switch_msgs = {}
 poe_switch = on_command(

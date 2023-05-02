@@ -24,13 +24,15 @@
 ---
 
 [![残心小站-文档库](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/cx.png )](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
-    
-> 详细教程 点击链接跳转👇 点击图片跳转☝️   
+
+> 详细教程 点击链接跳转👇 点击图片跳转☝️
+>
 ## [残心小站-文档库](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
 
 > 用户交流群:[610948446](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=KHGqjjbiz6fpRr-W2X9SugTXThKFiprJ&authKey=LhpClaGtc4%2Ff3EL7f4IIIt7F94vLHJj4HSS8c2YCE55nRBRBtftzla%2Bgj7pa0fWX&noverify=0&group_code=610948446
 )
 ---
+
 ## 功能特性
 
 - 可以使用gpt3.5和claude两种模型，支持自定义预设和本地预设  
@@ -62,8 +64,12 @@
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(7).png) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(8).png) |
 | Image 9 | Image 10 |
 | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(9).png) | ![](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/demo(10).png) |
+
 ## 更新
 
+- 2023/5/2 v1.1.7:  
+    1.增加GPT4和CLAUDE+的使用命令  
+    2.增加能使用GPT4和CLAUDE+的配置项poe_accesslist,只有list中的qq号和群号可以使用（不填默认poe管理员）  
 - 2023/5/1 v1.1.6:  
     1.完善预设管理的逻辑  
 - 2023/5/1 v1.1.5:  

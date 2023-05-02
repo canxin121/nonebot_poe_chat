@@ -70,7 +70,7 @@ class Config:
         self.superusers = get_config.poe_superusers if hasattr(get_config, 'poe_superusers') else []
         self.blacklist = get_config.poe_blacklist if hasattr(get_config, 'poe_blacklist') else []
         self.whitelist = get_config.poe_whitelist if hasattr(get_config, 'poe_whitelist') else self.superusers
-
+        self.accesslist = get_config.poe_accesslist if hasattr(get_config, 'poe_accesslist') else self.superusers
         self.mode = get_config.poe_mode if hasattr(get_config, 'poe_mode') and get_config.poe_mode in ['white', 'black'] else 'black'
 
         self.pic_able = getattr(get_config, 'poe_picable', None)

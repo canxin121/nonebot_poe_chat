@@ -23,6 +23,8 @@ async def send_message_async(page: Page, botname: str, input_str: str):
             content = await page.content()
             if text in content:
                 return "banned"
+            if "0 free" in content:
+                return "limited"
             # 找到输入框元素
             input_box = await page.wait_for_selector('.ChatMessageInputView_textInput__Aervw',timeout=2000)
 
@@ -94,6 +96,8 @@ async def poe_chat(botname,question,page,nosuggest=False):
     result1 = await send_message_async(page, botname, question)
     if result1 == "banned":
         return "banned"
+    elif result1 == "limited":
+        return "limited"
     elif result1 == False:
         return False
     if config.suggest_able == 'False':
