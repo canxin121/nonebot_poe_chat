@@ -1130,7 +1130,7 @@ async def __poe_help__(bot: Bot,matcher:Matcher,event: Event):
     "~登录:poelogin / plogin / pl\n"
     "~添加预设:poeaddprompt / 添加预设 / pap\n"
     "~删除预设:poeremoveprompt / 删除预设 / prp\n"
-    "~切换自动创建的默认预设:poechangeprompt / 切换自动预设 / pcp"
+    "~切换自动创建的默认预设:poechangeprompt / 切换自动预设 / pcp\n"
     "************************\n"
     "--以下功能仅限特定白名单用户使用\n"
     "~使用GPT4对话:poesharegpt4 \ psharegpt4 \ psg4 + 询问内容\n"
