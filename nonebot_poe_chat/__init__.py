@@ -1131,6 +1131,12 @@ async def __poe_help__(bot: Bot,matcher:Matcher,event: Event):
     "~添加预设:poeaddprompt / 添加预设 / pap\n"
     "~删除预设:poeremoveprompt / 删除预设 / prp\n"
     "~切换自动创建的默认预设:poechangeprompt / 切换自动预设 / pcp"
+    "************************\n"
+    "--以下功能仅限特定白名单用户使用\n"
+    "~使用GPT4对话:poesharegpt4 \ psharegpt4 \ psg4 + 询问内容\n"
+    "~清除GPT4对话历史:poegpt4dump \ poegpt4清除 \ pg4d\n"
+    "~使用CLAUDE+对话:poeshareclaudep \ pshareclaudp \ pscp +询问内容\n"
+    "~清除CLADUE+对话历史:poeclaudepdump \ poeclaudep清除 \ pcpd"
     )
     pic, url= await txt2img.draw(title="poe功能大全",text=msg)
     await poe_help.send(MessageSegment.image(pic))
