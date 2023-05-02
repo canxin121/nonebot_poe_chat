@@ -749,10 +749,10 @@ async def __poe_share_claude_plus__(bot:Bot,matcher:Matcher,event: Event, args: 
         await matcher.finish()
 ######################################################   
 poe_claude_plus_clear_ = on_command(
-    "poeclaude+dump",
+    "poeclaudepdump",
     aliases={
-        "poeclaude+清除",
-        "pc+d"
+        "poeclaudep清除",
+        "pcpd"
         },
     priority=4,
     block=False)
