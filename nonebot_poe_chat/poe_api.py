@@ -152,7 +152,7 @@ async def poe_create(page, botname, base_bot_index, prompt, retries=2):
             elif base_bot_index ==2:
                 value = "a2"
             # 根据索引选择选项
-            await page.select_option('.BotInfoForm_select__lFCl0', value=value)
+            await page.select_option('.Select_select__I0JvU', value=value)
             
             # 添加预设
             prompt_textarea = await page.wait_for_selector('textarea[name="prompt"]')
