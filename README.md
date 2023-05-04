@@ -30,7 +30,7 @@
 > 详细教程（必看，否则不会使用） 点击链接跳转👇 点击图片跳转☝️
 
 >
-## [残心小站-文档库](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
+## [必看教程-残心小站-文档库](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
 
 > 用户交流群:[610948446](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=KHGqjjbiz6fpRr-W2X9SugTXThKFiprJ&authKey=LhpClaGtc4%2Ff3EL7f4IIIt7F94vLHJj4HSS8c2YCE55nRBRBtftzla%2Bgj7pa0fWX&noverify=0&group_code=610948446
 )
