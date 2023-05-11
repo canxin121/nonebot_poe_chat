@@ -23,6 +23,7 @@
 
 ---
 
+！！！本项目已经停止维护更新，已经被[Spark GPT]()完全包含!!!!
 [![残心小站-文档库](https://github.com/canxin121/nonebot_poe_chat/blob/main/resource/cx.png )](https://canxin121.github.io/docs/docs/nonebot-poe-chat.html )
 
 > 详细教程（必看，否则不会使用） 点击链接跳转👇 点击图片跳转☝️
